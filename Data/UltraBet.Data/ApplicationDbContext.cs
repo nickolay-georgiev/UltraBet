@@ -10,7 +10,6 @@
     using Microsoft.EntityFrameworkCore;
     using UltraBet.Data.Common.Models;
     using UltraBet.Data.Models;
-    using Type = Models.MatchType;
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
@@ -32,9 +31,17 @@
 
         public DbSet<Bet> Bets { get; set; }
 
+        public DbSet<BetName> BetNames { get; set; }
+
         public DbSet<Odd> Odds { get; set; }
 
+        public DbSet<Team> Teams { get; set; }
+
+        public DbSet<MatchesTeams> MatchesTeams { get; set; }
+
         public DbSet<MatchType> MatchTypes { get; set; }
+
+        public DbSet<UpdatedModel> UpdatedModels { get; set; }
 
         public override int SaveChanges() => this.SaveChanges(true);
 
@@ -57,6 +64,9 @@
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<MatchesTeams>()
+                .HasKey(k => new { k.TeamId, k.MatchId });
+
             // Needed for Identity models configuration
             base.OnModelCreating(builder);
 

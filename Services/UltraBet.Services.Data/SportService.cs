@@ -2,122 +2,335 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
-    using System.Text;
     using System.Threading.Tasks;
+
     using UltraBet.Common;
     using UltraBet.Data.Common.Repositories;
     using UltraBet.Data.Models;
-    using UltraBet.Data.Models.Enums;
-    using MatchType = UltraBet.Data.Models.MatchType;
+    using UltraBet.Services.Mapping;
+    using UltraBet.Web.ViewModels;
 
     public class SportService : ISportService
     {
         private readonly ISportDataService sportDataService;
+        private readonly IDeletableEntityRepository<Bet> betRepository;
+        private readonly IDeletableEntityRepository<Odd> oddRepository;
+        private readonly IDeletableEntityRepository<Team> teamRepository;
+        private readonly IDeletableEntityRepository<Event> eventRepository;
         private readonly IDeletableEntityRepository<Sport> sportRepository;
         private readonly IDeletableEntityRepository<Match> matchRepository;
-        private readonly IRepository<MatchType> typeRepository;
+        private readonly IRepository<BetName> betNameRepository;
+        private readonly IRepository<MatchType> matchTypeRepository;
 
         public SportService(
             ISportDataService sportDataService,
+            IDeletableEntityRepository<Bet> betRepository,
+            IDeletableEntityRepository<Odd> oddRepository,
+            IDeletableEntityRepository<Team> teamRepository,
+            IDeletableEntityRepository<Event> eventRepository,
             IDeletableEntityRepository<Sport> sportRepository,
             IDeletableEntityRepository<Match> matchRepository,
+            IRepository<BetName> betNameRepository,
             IRepository<MatchType> matchTypeRepository)
         {
             this.sportDataService = sportDataService;
+            this.betRepository = betRepository;
+            this.oddRepository = oddRepository;
+            this.teamRepository = teamRepository;
+            this.eventRepository = eventRepository;
             this.sportRepository = sportRepository;
             this.matchRepository = matchRepository;
-            this.typeRepository = matchTypeRepository;
+            this.betNameRepository = betNameRepository;
+            this.matchTypeRepository = matchTypeRepository;
         }
 
         public async Task StoreDataAsync()
         {
+            var watch = new Stopwatch();
+            watch.Start();
+
             var data = await this.sportDataService.GetSportDataAsync();
 
-            var sport = new Sport
+            var sport = this.sportRepository
+                .All()
+                .FirstOrDefault(x => x.Id == data.SportDto.Id);
+
+            if (sport is null)
             {
-                Name = data.SportDto.Name,
-                Id = data.SportDto.Id,
-            };
+                sport = new Sport
+                {
+                    Name = data.SportDto.Name,
+                    Id = data.SportDto.Id,
+                };
+
+                await this.sportRepository.AddAsync(sport);
+                await this.sportRepository.SaveChangesAsync();
+            }
 
             foreach (var eventDto in data.SportDto.Events)
             {
-                var currentEvent = new Event
+                var currentEvent = this.eventRepository
+                    .All()
+                    .FirstOrDefault(x => x.Id == eventDto.Id);
+
+                if (currentEvent is null)
                 {
-                    Name = eventDto.Name,
-                    Id = eventDto.Id,
-                    IsLive = eventDto.IsLive,
-                    CategoryId = eventDto.CategoryId,
-                    SportId = sport.Id,
-                };
+                    currentEvent = new Event
+                    {
+                        Name = eventDto.Name,
+                        Id = eventDto.Id,
+                        IsLive = eventDto.IsLive,
+                        CategoryId = eventDto.CategoryId,
+                        SportId = sport.Id,
+                    };
+
+                    sport.Events.Add(currentEvent);
+                }
 
                 foreach (var matchDto in eventDto.Matches)
                 {
-                    if (matchDto.MatchType == GlobalConstants.OutrightMatchType)
+                    if (matchDto.MatchType.ToUpper() == GlobalConstants.OutRightMatchType)
                     {
                         continue;
                     }
 
-                    var currentMatch = new Match
-                    {
-                        Name = matchDto.Name,
-                        Id = matchDto.Id,
-                        StartDate = matchDto.StartDate,
-                        EventId = currentEvent.Id,
-                    };
-
-                    var type = this.typeRepository
+                    var matchType = this.matchTypeRepository
                         .All()
-                        .FirstOrDefault(x => x.Name == matchDto.MatchType);
+                        .FirstOrDefault(x => x.Name == matchDto.MatchType.ToUpper());
 
-                    currentMatch.TypeId = type.Id;
+                    var currentMatch = this.matchRepository
+                        .All()
+                        .FirstOrDefault(x => x.Id == matchDto.Id);
 
-                    if (type.Matches.All(x => x.Id != currentMatch.Id))
+                    if (currentMatch is null)
                     {
-                        type.Matches.Add(currentMatch);
+                        currentMatch = new Match
+                        {
+                            Name = matchDto.Name,
+                            Id = matchDto.Id,
+                            StartDate = matchDto.StartDate,
+                            EventId = currentEvent.Id,
+                            TypeId = matchType.Id,
+                        };
 
-                        this.typeRepository.Update(type);
+                        currentEvent.Matches.Add(currentMatch);
+                    }
+                    else if (currentMatch.TypeId != matchType.Id)
+                    {
+                        currentMatch.TypeId = matchType.Id;
+                    }
+
+                    if (currentMatch.StartDate != matchDto.StartDate)
+                    {
+                        currentMatch.StartDate = matchDto.StartDate;
+                    }
+
+                    var teams = currentMatch.Name.Split(" - ");
+                    foreach (var teamName in teams)
+                    {
+                        var currentTeam = this.teamRepository
+                            .All()
+                            .FirstOrDefault(x => x.Name == teamName);
+
+                        if (currentTeam is null)
+                        {
+                            currentTeam = new Team { Name = teamName };
+
+                            await this.teamRepository.AddAsync(currentTeam);
+                            await this.teamRepository.SaveChangesAsync();
+                        }
+
+                        var te = this.matchRepository
+                         .All()
+                         .SelectMany(x => x.Teams)
+                         .Where(x => x.MatchId == matchDto.Id)
+                         .ToList();
+
+                        if (te.All(x => x.TeamId != currentTeam.Id && x.MatchId != currentMatch.Id))
+                        {
+                            currentMatch.Teams.Add(new MatchesTeams { TeamId = currentTeam.Id });
+                        }
                     }
 
                     if (matchDto.Bets is not null)
                     {
                         foreach (var betDto in matchDto.Bets)
                         {
-                            var currentBet = new Bet
-                            {
-                                Name = betDto.Name,
-                                Id = betDto.Id,
-                                IsLive = betDto.IsLive,
-                                MatchId = currentMatch.Id,
-                            };
+                            var betName = this.betNameRepository
+                                .All()
+                                .FirstOrDefault(x => x.Name == betDto.Name);
 
-                            foreach (var oddDto in betDto.Odds)
+                            if (betName is null)
                             {
-                                var currentOdd = new Odd
-                                {
-                                    Name = oddDto.Name,
-                                    Id = oddDto.Id,
-                                    Value = oddDto.Value,
-                                    SpecialBetValue = oddDto.SpecialBetValue,
-                                    BetId = currentBet.Id,
-                                };
+                                betName = new BetName { Name = betDto.Name };
 
-                                currentBet.Odds.Add(currentOdd);
+                                await this.betNameRepository.AddAsync(betName);
+                                await this.betNameRepository.SaveChangesAsync();
                             }
 
-                            currentMatch.Bets.Add(currentBet);
+                            var currentBet = this.betRepository
+                                 .All()
+                                 .FirstOrDefault(x => x.Id == betDto.Id);
+
+                            if (currentBet is null)
+                            {
+                                currentBet = new Bet
+                                {
+                                    Id = betDto.Id,
+                                    BetNameId = betName.Id,
+                                    IsLive = betDto.IsLive,
+                                    MatchId = currentMatch.Id,
+                                };
+
+                                currentMatch.Bets.Add(currentBet);
+                            }
+
+                            int counter = 1;
+                            string previousSpecialBetValue = null;
+                            foreach (var oddDto in betDto.Odds)
+                            {
+                                var currentOdd = this.oddRepository
+                                     .All()
+                                     .FirstOrDefault(x => x.Id == oddDto.Id);
+
+                                if (currentOdd is null)
+                                {
+                                    currentOdd = new Odd
+                                    {
+                                        Name = oddDto.Name,
+                                        Id = oddDto.Id,
+                                        Value = oddDto.Value,
+                                        SpecialBetValue = oddDto.SpecialBetValue,
+                                        BetId = currentBet.Id,
+                                    };
+
+                                    currentBet.Odds.Add(currentOdd);
+                                }
+                                else if (currentOdd.Value != oddDto.Value)
+                                {
+                                    currentOdd.Value = oddDto.Value;
+                                }
+
+                                if (currentOdd.SpecialBetValue is not null)
+                                {
+                                    if (previousSpecialBetValue is null)
+                                    {
+                                        previousSpecialBetValue = currentOdd.SpecialBetValue;
+                                    }
+
+                                    if (previousSpecialBetValue == currentOdd.SpecialBetValue)
+                                    {
+                                        currentOdd.GroupNumber = counter;
+                                    }
+                                    else
+                                    {
+                                        previousSpecialBetValue = currentOdd.SpecialBetValue;
+                                        currentOdd.GroupNumber = ++counter;
+                                    }
+                                }
+                                else
+                                {
+                                    currentOdd.GroupNumber = GlobalConstants.DefaultGroupNumber;
+                                }
+                            }
                         }
                     }
-
-                    currentEvent.Matches.Add(currentMatch);
                 }
-
-                sport.Events.Add(currentEvent);
             }
 
-            await this.sportRepository.AddAsync(sport);
+            this.sportRepository.Update(sport);
             await this.sportRepository.SaveChangesAsync();
-            await this.typeRepository.SaveChangesAsync();
+
+            // ~25sek
+            var time = watch.Elapsed;
         }
+
+        public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
+        {
+            var allowedBetNames = new List<string> { "Match Winner", "Map Advantage", "Total Maps Played" };
+
+            var aa = this.matchRepository
+                .AllAsNoTracking()
+                .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
+                .Select(x => new MatchViewModel
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    StartDate = x.StartDate,
+                    Bets = x.Bets
+                           .Where(b => allowedBetNames.Contains(b.BetName.Name))
+                           .Select(b => new BetViewModel
+                           {
+                               Id = b.Id,
+                               Name = b.BetName.Name,
+                               IsLive = b.IsLive,
+                               Odds = b.Odds
+                                      .Where(o => o.GroupNumber == 1)
+                                      .Select(o => new OddViewModel
+                                      {
+                                          Id = o.Id,
+                                          Name = o.Name,
+                                          Value = o.Value,
+                                          SpecialBetValue = o.SpecialBetValue,
+                                      }).ToList(),
+                           }).ToList(),
+                }).ToList();
+
+            var match = this.matchRepository
+                    .AllAsNoTracking()
+                    .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
+                    .To<MatchViewModel>()
+                    .ToList();
+
+            return this.matchRepository
+                .AllAsNoTracking()
+                .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
+                .To<MatchViewModel>()
+                .ToList();
+        }
+
+        public SingleMatchSearchViewModel GetMatchById(string id)
+        {
+            var match = this.matchRepository
+                 .AllAsNoTracking()
+                 .To<SingleMatchSearchViewModel>()
+                 .FirstOrDefault(x => x.Id == id);
+
+            return match;
+        }
+
+        // public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
+        // {
+        //    var allowedBetNames = new List<string> { "Match Winner", "Map Advantage", "Total Maps Played" };
+
+        // return this.matchRepository
+        //        .AllAsNoTracking()
+        //        .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
+        //        .Select(x => new MatchViewModel
+        //        {
+        //            Id = x.Id,
+        //            Name = x.Name,
+        //            StartDate = x.StartDate,
+        //            Bets = x.Bets
+        //                   .Where(b => allowedBetNames.Contains(b.BetName.Name))
+        //                   .Select(b => new BetViewModel
+        //                   {
+        //                       Id = b.Id,
+        //                       Name = b.BetName.Name,
+        //                       IsLive = b.IsLive,
+        //                       Odds = b.Odds
+        //                              .Where(o => o.GroupNumber == 1)
+        //                              .Select(o => new OddViewModel
+        //                              {
+        //                                  Id = o.Id,
+        //                                  Name = o.Name,
+        //                                  Value = o.Value,
+        //                                  SpecialBetValue = o.SpecialBetValue,
+        //                              }).ToList(),
+        //                   }).ToList(),
+        //        }).ToList();
+        // }
     }
 }

@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UltraBet.Common;
-using MatchType = UltraBet.Data.Models.MatchType;
-
-namespace UltraBet.Data.Seeding
+﻿namespace UltraBet.Data.Seeding
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+
+    using UltraBet.Common;
+
+    using MatchType = UltraBet.Data.Models.MatchType;
+
     public class MatchTypesSeeder : ISeeder
     {
         public async Task SeedAsync(ApplicationDbContext dbContext, IServiceProvider serviceProvider)

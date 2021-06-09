@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Data\UltraBet.Data.Common\UltraBet.Data.Common.csproj" />
     <ProjectReference Include="..\..\Data\UltraBet.Data.Models\UltraBet.Data.Models.csproj" />
+    <ProjectReference Include="..\..\Web\UltraBet.Web.ViewModels\UltraBet.Web.ViewModels.csproj" />
     <ProjectReference Include="..\UltraBet.Services.Mapping\UltraBet.Services.Mapping.csproj" />
     <ProjectReference Include="..\UltraBet.Services\UltraBet.Services.csproj" />
   </ItemGroup>

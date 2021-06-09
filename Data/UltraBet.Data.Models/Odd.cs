@@ -1,8 +1,5 @@
 ﻿namespace UltraBet.Data.Models
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
 
     using UltraBet.Data.Common.Models;
 
@@ -11,6 +8,8 @@
         public string Name { get; set; }
 
         public double Value { get; set; }
+
+        public int? GroupNumber { get; set; }
 
         public string SpecialBetValue { get; set; }
 

@@ -1,12 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UltraBet.Services.Data
+﻿namespace UltraBet.Services.Data
 {
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    using UltraBet.Web.ViewModels;
+
     public interface ISportService
     {
         Task StoreDataAsync();
+
+        IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours();
+
+        SingleMatchSearchViewModel GetMatchById(string id);
     }
 }

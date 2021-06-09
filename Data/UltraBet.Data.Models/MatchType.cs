@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UltraBet.Data.Common.Models;
-
-namespace UltraBet.Data.Models
+﻿namespace UltraBet.Data.Models
 {
+    using System.Collections.Generic;
+
+    using UltraBet.Data.Common.Models;
+
     public class MatchType : BaseModel<int>
     {
         public MatchType()

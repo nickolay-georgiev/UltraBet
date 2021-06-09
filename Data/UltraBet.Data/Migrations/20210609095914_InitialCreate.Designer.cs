@@ -10,7 +10,7 @@ using UltraBet.Data;
 namespace UltraBet.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210608125913_InitialCreate")]
+    [Migration("20210609095914_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -250,6 +250,9 @@ namespace UltraBet.Data.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("BetNameId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
@@ -268,16 +271,36 @@ namespace UltraBet.Data.Migrations
                     b.Property<DateTime?>("ModifiedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("BetNameId");
 
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("MatchId");
 
                     b.ToTable("Bets");
+                });
+
+            modelBuilder.Entity("UltraBet.Data.Models.BetName", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BetNames");
                 });
 
             modelBuilder.Entity("UltraBet.Data.Models.Event", b =>
@@ -379,6 +402,21 @@ namespace UltraBet.Data.Migrations
                     b.ToTable("MatchTypes");
                 });
 
+            modelBuilder.Entity("UltraBet.Data.Models.MatchesTeams", b =>
+                {
+                    b.Property<int>("TeamId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MatchId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("TeamId", "MatchId");
+
+                    b.HasIndex("MatchId");
+
+                    b.ToTable("MatchesTeams");
+                });
+
             modelBuilder.Entity("UltraBet.Data.Models.Odd", b =>
                 {
                     b.Property<string>("Id")
@@ -444,6 +482,35 @@ namespace UltraBet.Data.Migrations
                     b.ToTable("Sports");
                 });
 
+            modelBuilder.Entity("UltraBet.Data.Models.Team", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.ToTable("Teams");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("UltraBet.Data.Models.ApplicationRole", null)
@@ -497,9 +564,17 @@ namespace UltraBet.Data.Migrations
 
             modelBuilder.Entity("UltraBet.Data.Models.Bet", b =>
                 {
+                    b.HasOne("UltraBet.Data.Models.BetName", "BetName")
+                        .WithMany("Bets")
+                        .HasForeignKey("BetNameId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("UltraBet.Data.Models.Match", "Match")
                         .WithMany("Bets")
                         .HasForeignKey("MatchId");
+
+                    b.Navigation("BetName");
 
                     b.Navigation("Match");
                 });
@@ -530,6 +605,25 @@ namespace UltraBet.Data.Migrations
                     b.Navigation("Type");
                 });
 
+            modelBuilder.Entity("UltraBet.Data.Models.MatchesTeams", b =>
+                {
+                    b.HasOne("UltraBet.Data.Models.Match", "Match")
+                        .WithMany("Teams")
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UltraBet.Data.Models.Team", "Team")
+                        .WithMany("Matches")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Match");
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("UltraBet.Data.Models.Odd", b =>
                 {
                     b.HasOne("UltraBet.Data.Models.Bet", "Bet")
@@ -553,6 +647,11 @@ namespace UltraBet.Data.Migrations
                     b.Navigation("Odds");
                 });
 
+            modelBuilder.Entity("UltraBet.Data.Models.BetName", b =>
+                {
+                    b.Navigation("Bets");
+                });
+
             modelBuilder.Entity("UltraBet.Data.Models.Event", b =>
                 {
                     b.Navigation("Matches");
@@ -561,6 +660,8 @@ namespace UltraBet.Data.Migrations
             modelBuilder.Entity("UltraBet.Data.Models.Match", b =>
                 {
                     b.Navigation("Bets");
+
+                    b.Navigation("Teams");
                 });
 
             modelBuilder.Entity("UltraBet.Data.Models.MatchType", b =>
@@ -571,6 +672,11 @@ namespace UltraBet.Data.Migrations
             modelBuilder.Entity("UltraBet.Data.Models.Sport", b =>
                 {
                     b.Navigation("Events");
+                });
+
+            modelBuilder.Entity("UltraBet.Data.Models.Team", b =>
+                {
+                    b.Navigation("Matches");
                 });
 #pragma warning restore 612, 618
         }

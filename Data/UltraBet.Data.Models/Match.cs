@@ -2,8 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.ComponentModel.DataAnnotations.Schema;
-    using System.Text;
 
     using UltraBet.Data.Common.Models;
 
@@ -12,7 +10,7 @@
         public Match()
         {
             this.Bets = new HashSet<Bet>();
-            //this.MatchTypes = new HashSet<MatchTypes>();
+            this.Teams = new HashSet<MatchesTeams>();
         }
 
         public string Name { get; set; }
@@ -23,12 +21,12 @@
 
         public MatchType Type { get; set; }
 
-        //public virtual ICollection<MatchTypes> MatchTypes { get; set; }
-
         public string EventId { get; set; }
 
         public virtual Event Event { get; set; }
 
         public virtual ICollection<Bet> Bets { get; set; }
+
+        public virtual ICollection<MatchesTeams> Teams { get; set; }
     }
 }
