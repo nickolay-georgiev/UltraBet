@@ -11,6 +11,6 @@
 
         IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours();
 
-        SingleMatchSearchViewModel GetMatchById(string id);
+        MatchSearchByIdViewModel GetMatchById(string id);
     }
 }

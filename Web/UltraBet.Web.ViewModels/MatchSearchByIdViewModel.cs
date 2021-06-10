@@ -5,8 +5,8 @@
     using UltraBet.Data.Models;
     using UltraBet.Services.Mapping;
 
-    public class SingleMatchSearchViewModel : BaseMatchViewModel, IMapFrom<Match>
+    public class MatchSearchByIdViewModel : BaseMatchViewModel, IMapFrom<Match>
     {
-        public ICollection<BetInSingleMatchSearchViewModel> Bets { get; set; }
+        public ICollection<BetInMatchSearchByIdViewModel> Bets { get; set; }
     }
 }

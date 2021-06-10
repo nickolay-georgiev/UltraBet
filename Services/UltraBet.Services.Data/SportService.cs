@@ -1,5 +1,6 @@
 ﻿namespace UltraBet.Services.Data
 {
+    using Microsoft.Extensions.Caching.Memory;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -14,6 +15,7 @@
 
     public class SportService : ISportService
     {
+        private readonly IMemoryCache memoryCache;
         private readonly ISportDataService sportDataService;
         private readonly IDeletableEntityRepository<Bet> betRepository;
         private readonly IDeletableEntityRepository<Odd> oddRepository;
@@ -25,6 +27,7 @@
         private readonly IRepository<MatchType> matchTypeRepository;
 
         public SportService(
+            IMemoryCache memoryCache,
             ISportDataService sportDataService,
             IDeletableEntityRepository<Bet> betRepository,
             IDeletableEntityRepository<Odd> oddRepository,
@@ -35,6 +38,7 @@
             IRepository<BetName> betNameRepository,
             IRepository<MatchType> matchTypeRepository)
         {
+            this.memoryCache = memoryCache;
             this.sportDataService = sportDataService;
             this.betRepository = betRepository;
             this.oddRepository = oddRepository;
@@ -249,56 +253,42 @@
 
         public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
         {
-            var allowedBetNames = new List<string> { "Match Winner", "Map Advantage", "Total Maps Played" };
+            IEnumerable<MatchViewModel> matchViewModel;
 
-            var aa = this.matchRepository
-                .AllAsNoTracking()
-                .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
-                .Select(x => new MatchViewModel
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    StartDate = x.StartDate,
-                    Bets = x.Bets
-                           .Where(b => allowedBetNames.Contains(b.BetName.Name))
-                           .Select(b => new BetViewModel
-                           {
-                               Id = b.Id,
-                               Name = b.BetName.Name,
-                               IsLive = b.IsLive,
-                               Odds = b.Odds
-                                      .Where(o => o.GroupNumber == 1)
-                                      .Select(o => new OddViewModel
-                                      {
-                                          Id = o.Id,
-                                          Name = o.Name,
-                                          Value = o.Value,
-                                          SpecialBetValue = o.SpecialBetValue,
-                                      }).ToList(),
-                           }).ToList(),
-                }).ToList();
+            if (!this.memoryCache.TryGetValue<IEnumerable<MatchViewModel>>(
+                nameof(this.GetMatchesInNextTwentyFourHours), out matchViewModel))
+            {
+                matchViewModel = this.matchRepository
+                                     .AllAsNoTracking()
+                                     .Where(x => x.StartDate >= DateTime.UtcNow &&
+                                                 x.StartDate <= DateTime.UtcNow.AddHours(24))
+                                     .To<MatchViewModel>()
+                                     .ToList();
 
-            var match = this.matchRepository
-                    .AllAsNoTracking()
-                    .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
-                    .To<MatchViewModel>()
-                    .ToList();
+                this.memoryCache.Set(
+                    nameof(this.GetMatchesInNextTwentyFourHours), matchViewModel, TimeSpan.FromSeconds(60));
+            }
 
-            return this.matchRepository
-                .AllAsNoTracking()
-                .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
-                .To<MatchViewModel>()
-                .ToList();
+            return matchViewModel;
         }
 
-        public SingleMatchSearchViewModel GetMatchById(string id)
+        public MatchSearchByIdViewModel GetMatchById(string id)
         {
-            var match = this.matchRepository
-                 .AllAsNoTracking()
-                 .To<SingleMatchSearchViewModel>()
-                 .FirstOrDefault(x => x.Id == id);
+            MatchSearchByIdViewModel matchViewModel;
 
-            return match;
+            if (!this.memoryCache.TryGetValue<MatchSearchByIdViewModel>(
+                nameof(this.GetMatchById), out matchViewModel))
+            {
+                matchViewModel = this.matchRepository
+                                     .AllAsNoTracking()
+                                     .To<MatchSearchByIdViewModel>()
+                                     .FirstOrDefault(x => x.Id == id);
+
+                this.memoryCache.Set(
+                    nameof(this.GetMatchById), matchViewModel, TimeSpan.FromSeconds(60));
+            }
+
+            return matchViewModel;
         }
 
         // public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
