@@ -1,9 +1,8 @@
-﻿namespace UltraBet.Data.Migrations
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+namespace UltraBet.Data.Migrations
 {
-    using System;
-
-    using Microsoft.EntityFrameworkCore.Migrations;
-
     public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -86,6 +85,21 @@
                 });
 
             migrationBuilder.CreateTable(
+                name: "OddNames",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedOn = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OddNames", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Sports",
                 columns: table => new
                 {
@@ -116,6 +130,22 @@
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Teams", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UpdatedModels",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Model = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedOn = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UpdatedModels", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -339,9 +369,10 @@
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Value = table.Column<double>(type: "float", nullable: false),
+                    GroupNumber = table.Column<int>(type: "int", nullable: true),
                     SpecialBetValue = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OddNameId = table.Column<int>(type: "int", nullable: false),
                     BetId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedOn = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -355,6 +386,12 @@
                         name: "FK_Odds_Bets_BetId",
                         column: x => x.BetId,
                         principalTable: "Bets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Odds_OddNames_OddNameId",
+                        column: x => x.OddNameId,
+                        principalTable: "OddNames",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -464,6 +501,11 @@
                 column: "IsDeleted");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Odds_OddNameId",
+                table: "Odds",
+                column: "OddNameId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Sports_IsDeleted",
                 table: "Sports",
                 column: "IsDeleted");
@@ -498,6 +540,9 @@
                 name: "Odds");
 
             migrationBuilder.DropTable(
+                name: "UpdatedModels");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -508,6 +553,9 @@
 
             migrationBuilder.DropTable(
                 name: "Bets");
+
+            migrationBuilder.DropTable(
+                name: "OddNames");
 
             migrationBuilder.DropTable(
                 name: "BetNames");

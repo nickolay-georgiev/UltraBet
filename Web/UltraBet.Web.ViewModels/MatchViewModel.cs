@@ -7,7 +7,7 @@
     using UltraBet.Data.Models;
     using UltraBet.Services.Mapping;
 
-    public class MatchViewModel : BaseMatchViewModel, IMapFrom<Match>, IHaveCustomMappings
+    public class MatchViewModel : BaseMatchViewModel, IHaveCustomMappings
     {
         public ICollection<BetViewModel> Bets { get; set; }
 

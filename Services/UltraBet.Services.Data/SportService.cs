@@ -24,6 +24,7 @@
         private readonly IDeletableEntityRepository<Sport> sportRepository;
         private readonly IDeletableEntityRepository<Match> matchRepository;
         private readonly IRepository<BetName> betNameRepository;
+        private readonly IRepository<OddName> oddNameNameRepository;
         private readonly IRepository<MatchType> matchTypeRepository;
 
         public SportService(
@@ -36,6 +37,7 @@
             IDeletableEntityRepository<Sport> sportRepository,
             IDeletableEntityRepository<Match> matchRepository,
             IRepository<BetName> betNameRepository,
+            IRepository<OddName> oddNameNameRepository,
             IRepository<MatchType> matchTypeRepository)
         {
             this.memoryCache = memoryCache;
@@ -47,15 +49,22 @@
             this.sportRepository = sportRepository;
             this.matchRepository = matchRepository;
             this.betNameRepository = betNameRepository;
+            this.oddNameNameRepository = oddNameNameRepository;
             this.matchTypeRepository = matchTypeRepository;
         }
 
         public async Task StoreDataAsync()
         {
+            var data = await this.sportDataService.GetSportDataAsync();
+
+            var oddNamesAndIds = this.oddNameNameRepository
+                .AllAsNoTracking()
+                .ToList()
+                .GroupBy(x => x.Name)
+                .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
+
             var watch = new Stopwatch();
             watch.Start();
-
-            var data = await this.sportDataService.GetSportDataAsync();
 
             var sport = this.sportRepository
                 .All()
@@ -201,13 +210,25 @@
 
                                 if (currentOdd is null)
                                 {
+                                    if (!oddNamesAndIds.ContainsKey(oddDto.Name))
+                                    {
+                                        var oddName = new OddName { Name = oddDto.Name };
+
+                                        await this.oddNameNameRepository.AddAsync(oddName);
+                                        await this.oddNameNameRepository.SaveChangesAsync();
+
+                                        oddNamesAndIds.Add(oddDto.Name, oddName.Id);
+                                    }
+
+                                    var oddNameId = oddNamesAndIds[oddDto.Name];
+
                                     currentOdd = new Odd
                                     {
-                                        Name = oddDto.Name,
                                         Id = oddDto.Id,
                                         Value = oddDto.Value,
                                         SpecialBetValue = oddDto.SpecialBetValue,
                                         BetId = currentBet.Id,
+                                        OddNameId = oddNameId,
                                     };
 
                                     currentBet.Odds.Add(currentOdd);

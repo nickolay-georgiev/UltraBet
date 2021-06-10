@@ -2,7 +2,10 @@
 {
     using System.Collections.Generic;
 
-    public class BaseBetViewModel
+    using UltraBet.Data.Models;
+    using UltraBet.Services.Mapping;
+
+    public class BaseBetViewModel : IMapFrom<Bet>
     {
         public string Id { get; set; }
 

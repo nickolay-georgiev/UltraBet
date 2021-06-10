@@ -438,8 +438,8 @@ namespace UltraBet.Data.Migrations
                     b.Property<DateTime?>("ModifiedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("OddNameId")
+                        .HasColumnType("int");
 
                     b.Property<string>("SpecialBetValue")
                         .HasColumnType("nvarchar(max)");
@@ -453,7 +453,30 @@ namespace UltraBet.Data.Migrations
 
                     b.HasIndex("IsDeleted");
 
+                    b.HasIndex("OddNameId");
+
                     b.ToTable("Odds");
+                });
+
+            modelBuilder.Entity("UltraBet.Data.Models.OddName", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OddNames");
                 });
 
             modelBuilder.Entity("UltraBet.Data.Models.Sport", b =>
@@ -655,7 +678,15 @@ namespace UltraBet.Data.Migrations
                         .WithMany("Odds")
                         .HasForeignKey("BetId");
 
+                    b.HasOne("UltraBet.Data.Models.OddName", "OddName")
+                        .WithMany("Odds")
+                        .HasForeignKey("OddNameId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Bet");
+
+                    b.Navigation("OddName");
                 });
 
             modelBuilder.Entity("UltraBet.Data.Models.ApplicationUser", b =>
@@ -692,6 +723,11 @@ namespace UltraBet.Data.Migrations
             modelBuilder.Entity("UltraBet.Data.Models.MatchType", b =>
                 {
                     b.Navigation("Matches");
+                });
+
+            modelBuilder.Entity("UltraBet.Data.Models.OddName", b =>
+                {
+                    b.Navigation("Odds");
                 });
 
             modelBuilder.Entity("UltraBet.Data.Models.Sport", b =>

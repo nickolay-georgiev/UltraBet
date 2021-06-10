@@ -1,4 +1,22 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿function initHub() {
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/index")
+        .build();
 
-// Write your JavaScript code.
+    connection.on("getMatchesInNext24Hours", function (data) {
+        let data = data;
+    });
+
+    connection.on("getMatchById", function (data) {
+        let data = data;
+    });
+
+    connection.start()
+        .then(() => {
+            setInterval(function () {
+                connection.invoke("GetMatchesInNextTwentyFourHours");
+            }, 30000);
+        })
+        .catch(err => console.log(err.toString()));
+}
+initHub()

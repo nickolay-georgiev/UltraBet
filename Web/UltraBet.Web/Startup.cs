@@ -18,6 +18,7 @@
     using UltraBet.Services;
     using UltraBet.Services.Data;
     using UltraBet.Services.Mapping;
+    using UltraBet.Web.Hubs;
     using UltraBet.Web.ViewModels;
 
     public class Startup
@@ -43,6 +44,8 @@
                         options.CheckConsentNeeded = context => true;
                         options.MinimumSameSitePolicy = SameSiteMode.None;
                     });
+
+            services.AddSignalR();
 
             services.AddHttpClient();
 
@@ -100,6 +103,7 @@
             app.UseEndpoints(
                 endpoints =>
                     {
+                        endpoints.MapHub<MatchHub>("/index");
                         endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Home}/{action=Index}/{id?}");
                         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
                         endpoints.MapRazorPages();

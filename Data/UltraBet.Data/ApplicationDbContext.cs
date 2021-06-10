@@ -43,6 +43,8 @@
 
         public DbSet<UpdatedModel> UpdatedModels { get; set; }
 
+        public DbSet<OddName> OddNames { get; set; }
+
         public override int SaveChanges() => this.SaveChanges(true);
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)

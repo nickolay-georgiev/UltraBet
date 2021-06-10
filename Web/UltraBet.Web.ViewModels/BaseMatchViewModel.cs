@@ -2,7 +2,10 @@
 {
     using System;
 
-    public class BaseMatchViewModel
+    using UltraBet.Data.Models;
+    using UltraBet.Services.Mapping;
+
+    public class BaseMatchViewModel : IMapFrom<Match>
     {
         public string Id { get; set; }
 

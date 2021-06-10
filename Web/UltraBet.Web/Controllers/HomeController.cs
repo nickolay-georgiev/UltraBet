@@ -18,9 +18,9 @@
 
         public async Task<IActionResult> Index()
         {
-            // await this.sportDataService.StoreDataAsync();
+            //await this.sportDataService.StoreDataAsync();
             this.sportDataService.GetMatchById("2014802");
-            //this.sportDataService.GetMatchesInNextTwentyFourHours();
+            this.sportDataService.GetMatchesInNextTwentyFourHours();
 
             return this.View();
         }
