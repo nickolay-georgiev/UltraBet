@@ -8,8 +8,6 @@
 
     public class SportDataService : ISportDataService
     {
-        private const string XmlRootAttribute = "XmlSports";
-
         private readonly HttpClient httpClient;
         private readonly IDeserializer deserializer;
 
@@ -21,12 +19,12 @@
             this.deserializer = deserializer;
         }
 
-        public async Task<XmlSportsDto> GetSportDataAsync()
+        public async Task<XmlSportsDto> GetSportDataAsync(string url)
         {
-            var response = await this.httpClient.GetAsync(GlobalConstants.SportDataUrl);
+            var response = await this.httpClient.GetAsync(url);
             var responseAsString = await response.Content.ReadAsStringAsync();
 
-            var data = this.deserializer.Deserialize<XmlSportsDto>(responseAsString, XmlRootAttribute);
+            var data = this.deserializer.Deserialize<XmlSportsDto>(responseAsString);
 
             return data;
         }

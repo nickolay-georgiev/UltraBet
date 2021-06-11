@@ -1,7 +1,11 @@
 ﻿namespace UltraBet.Web
 {
+    using System;
     using System.Reflection;
 
+    using Hangfire;
+    using Hangfire.Dashboard;
+    using Hangfire.SqlServer;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
@@ -17,6 +21,7 @@
     using UltraBet.Data.Seeding;
     using UltraBet.Services;
     using UltraBet.Services.Data;
+    using UltraBet.Services.Data.CronJobs;
     using UltraBet.Services.Mapping;
     using UltraBet.Web.Hubs;
     using UltraBet.Web.ViewModels;
@@ -47,6 +52,23 @@
 
             services.AddSignalR();
 
+            services.AddHangfire(
+                   config => config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+                       .UseSimpleAssemblyNameTypeSerializer().UseRecommendedSerializerSettings()
+                       .UseSqlServerStorage(
+                           this.configuration.GetConnectionString("DefaultConnection"),
+                           new SqlServerStorageOptions
+                           {
+                               CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                               SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                               QueuePollInterval = TimeSpan.Zero,
+                               UseRecommendedIsolationLevel = true,
+                               UsePageLocksOnDequeue = true,
+                               DisableGlobalLocks = true,
+                           }));
+
+            services.AddHangfireServer();
+
             services.AddHttpClient();
 
             services.AddMemoryCache();
@@ -68,7 +90,7 @@
             services.AddTransient<ISportService, SportService>();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IRecurringJobManager recurringJobManager)
         {
             AutoMapperConfig.RegisterMappings(typeof(MatchViewModel).GetTypeInfo().Assembly);
 
@@ -77,7 +99,12 @@
             {
                 var dbContext = serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 dbContext.Database.Migrate();
-                new ApplicationDbContextSeeder().SeedAsync(dbContext, serviceScope.ServiceProvider).GetAwaiter().GetResult();
+
+                new ApplicationDbContextSeeder().SeedAsync(dbContext, serviceScope.ServiceProvider)
+                    .GetAwaiter()
+                    .GetResult();
+
+                this.SeedHangfireJobs(recurringJobManager);
             }
 
             if (env.IsDevelopment())
@@ -100,6 +127,15 @@
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseHangfireServer(new BackgroundJobServerOptions { WorkerCount = 1 });
+            app.UseHangfireDashboard(
+             "/Hangfire",
+             new DashboardOptions
+             {
+                 Authorization = new[] { new HangfireAuthorizationFilter() },
+                 AppPath = "/",
+             });
+
             app.UseEndpoints(
                 endpoints =>
                     {
@@ -108,6 +144,19 @@
                         endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
                         endpoints.MapRazorPages();
                     });
+        }
+
+        private void SeedHangfireJobs(IRecurringJobManager recurringJobManager)
+        {
+            //recurringJobManager.AddOrUpdate<FetchSportData>(nameof(FetchSportData), x => x.Work(), Cron.Minutely);
+        }
+
+        public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
+        {
+            public bool Authorize(DashboardContext context)
+            {
+                return true;
+            }
         }
     }
 }

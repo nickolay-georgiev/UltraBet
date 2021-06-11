@@ -18,7 +18,9 @@
                     opt.MapFrom(x => x.Bets
                        .Where(x => x.BetName.Name == "Match Winner" ||
                                    x.BetName.Name == "Map Advantage" ||
-                                   x.BetName.Name == "Total Maps Played")));
+                                   x.BetName.Name == "Total Maps Played")))
+                .ForMember(x => x.Teams, opt =>
+                    opt.MapFrom(x => x.Teams.Select(x => x.Team.Name).ToList()));
         }
     }
 }

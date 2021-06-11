@@ -6,6 +6,6 @@
 
     public interface ISportDataService
     {
-        Task<XmlSportsDto> GetSportDataAsync();
+        Task<XmlSportsDto> GetSportDataAsync(string url);
     }
 }

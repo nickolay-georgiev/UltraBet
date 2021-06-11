@@ -1,22 +1,21 @@
 ﻿namespace UltraBet.Services.Data
 {
-    using Microsoft.Extensions.Caching.Memory;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Microsoft.Extensions.Caching.Memory;
     using UltraBet.Common;
     using UltraBet.Data.Common.Repositories;
     using UltraBet.Data.Models;
     using UltraBet.Services.Mapping;
+    using UltraBet.Services.Models;
     using UltraBet.Web.ViewModels;
 
     public class SportService : ISportService
     {
-        private readonly IMemoryCache memoryCache;
-        private readonly ISportDataService sportDataService;
         private readonly IDeletableEntityRepository<Bet> betRepository;
         private readonly IDeletableEntityRepository<Odd> oddRepository;
         private readonly IDeletableEntityRepository<Team> teamRepository;
@@ -24,12 +23,10 @@
         private readonly IDeletableEntityRepository<Sport> sportRepository;
         private readonly IDeletableEntityRepository<Match> matchRepository;
         private readonly IRepository<BetName> betNameRepository;
-        private readonly IRepository<OddName> oddNameNameRepository;
+        private readonly IRepository<OddName> oddNameRepository;
         private readonly IRepository<MatchType> matchTypeRepository;
 
         public SportService(
-            IMemoryCache memoryCache,
-            ISportDataService sportDataService,
             IDeletableEntityRepository<Bet> betRepository,
             IDeletableEntityRepository<Odd> oddRepository,
             IDeletableEntityRepository<Team> teamRepository,
@@ -37,11 +34,9 @@
             IDeletableEntityRepository<Sport> sportRepository,
             IDeletableEntityRepository<Match> matchRepository,
             IRepository<BetName> betNameRepository,
-            IRepository<OddName> oddNameNameRepository,
+            IRepository<OddName> oddNameRepository,
             IRepository<MatchType> matchTypeRepository)
         {
-            this.memoryCache = memoryCache;
-            this.sportDataService = sportDataService;
             this.betRepository = betRepository;
             this.oddRepository = oddRepository;
             this.teamRepository = teamRepository;
@@ -49,15 +44,19 @@
             this.sportRepository = sportRepository;
             this.matchRepository = matchRepository;
             this.betNameRepository = betNameRepository;
-            this.oddNameNameRepository = oddNameNameRepository;
+            this.oddNameRepository = oddNameRepository;
             this.matchTypeRepository = matchTypeRepository;
         }
 
-        public async Task StoreDataAsync()
+        public async Task StoreDataAsync(XmlSportsDto data)
         {
-            var data = await this.sportDataService.GetSportDataAsync();
+            var oddNamesWithIds = this.oddNameRepository
+                .AllAsNoTracking()
+                .ToList()
+                .GroupBy(x => x.Name)
+                .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
 
-            var oddNamesAndIds = this.oddNameNameRepository
+            var matchTypesWithIds = this.matchTypeRepository
                 .AllAsNoTracking()
                 .ToList()
                 .GroupBy(x => x.Name)
@@ -104,14 +103,13 @@
 
                 foreach (var matchDto in eventDto.Matches)
                 {
-                    if (matchDto.MatchType.ToUpper() == GlobalConstants.OutRightMatchType)
+                    var matchType = matchDto.MatchType.ToUpper();
+                    if (matchType == GlobalConstants.OutRightMatchType)
                     {
                         continue;
                     }
 
-                    var matchType = this.matchTypeRepository
-                        .All()
-                        .FirstOrDefault(x => x.Name == matchDto.MatchType.ToUpper());
+                    var matchTypeId = matchTypesWithIds[matchType];
 
                     var currentMatch = this.matchRepository
                         .All()
@@ -125,46 +123,41 @@
                             Id = matchDto.Id,
                             StartDate = matchDto.StartDate,
                             EventId = currentEvent.Id,
-                            TypeId = matchType.Id,
+                            TypeId = matchTypeId,
                         };
+
+                        var teams = currentMatch.Name.Split(" - ");
+                        foreach (var teamName in teams)
+                        {
+                            var currentTeam = this.teamRepository
+                                .All()
+                                .FirstOrDefault(x => x.Name == teamName);
+
+                            if (currentTeam is null)
+                            {
+                                currentTeam = new Team { Name = teamName };
+
+                                await this.teamRepository.AddAsync(currentTeam);
+                                await this.teamRepository.SaveChangesAsync();
+                            }
+
+                            currentMatch.Teams.Add(new MatchesTeams
+                            {
+                                TeamId = currentTeam.Id,
+                                MatchId = currentMatch.Id,
+                            });
+                        }
 
                         currentEvent.Matches.Add(currentMatch);
                     }
-                    else if (currentMatch.TypeId != matchType.Id)
+                    else if (currentMatch.TypeId != matchTypeId)
                     {
-                        currentMatch.TypeId = matchType.Id;
+                        currentMatch.TypeId = matchTypeId;
                     }
 
                     if (currentMatch.StartDate != matchDto.StartDate)
                     {
                         currentMatch.StartDate = matchDto.StartDate;
-                    }
-
-                    var teams = currentMatch.Name.Split(" - ");
-                    foreach (var teamName in teams)
-                    {
-                        var currentTeam = this.teamRepository
-                            .All()
-                            .FirstOrDefault(x => x.Name == teamName);
-
-                        if (currentTeam is null)
-                        {
-                            currentTeam = new Team { Name = teamName };
-
-                            await this.teamRepository.AddAsync(currentTeam);
-                            await this.teamRepository.SaveChangesAsync();
-                        }
-
-                        var te = this.matchRepository
-                         .All()
-                         .SelectMany(x => x.Teams)
-                         .Where(x => x.MatchId == matchDto.Id)
-                         .ToList();
-
-                        if (te.All(x => x.TeamId != currentTeam.Id && x.MatchId != currentMatch.Id))
-                        {
-                            currentMatch.Teams.Add(new MatchesTeams { TeamId = currentTeam.Id });
-                        }
                     }
 
                     if (matchDto.Bets is not null)
@@ -210,17 +203,17 @@
 
                                 if (currentOdd is null)
                                 {
-                                    if (!oddNamesAndIds.ContainsKey(oddDto.Name))
+                                    if (!oddNamesWithIds.ContainsKey(oddDto.Name))
                                     {
                                         var oddName = new OddName { Name = oddDto.Name };
 
-                                        await this.oddNameNameRepository.AddAsync(oddName);
-                                        await this.oddNameNameRepository.SaveChangesAsync();
+                                        await this.oddNameRepository.AddAsync(oddName);
+                                        await this.oddNameRepository.SaveChangesAsync();
 
-                                        oddNamesAndIds.Add(oddDto.Name, oddName.Id);
+                                        oddNamesWithIds.Add(oddDto.Name, oddName.Id);
                                     }
 
-                                    var oddNameId = oddNamesAndIds[oddDto.Name];
+                                    var oddNameId = oddNamesWithIds[oddDto.Name];
 
                                     currentOdd = new Odd
                                     {
@@ -274,40 +267,22 @@
 
         public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
         {
-            IEnumerable<MatchViewModel> matchViewModel;
-
-            if (!this.memoryCache.TryGetValue<IEnumerable<MatchViewModel>>(
-                nameof(this.GetMatchesInNextTwentyFourHours), out matchViewModel))
-            {
-                matchViewModel = this.matchRepository
-                                     .AllAsNoTracking()
-                                     .Where(x => x.StartDate >= DateTime.UtcNow &&
-                                                 x.StartDate <= DateTime.UtcNow.AddHours(24))
-                                     .To<MatchViewModel>()
-                                     .ToList();
-
-                this.memoryCache.Set(
-                    nameof(this.GetMatchesInNextTwentyFourHours), matchViewModel, TimeSpan.FromSeconds(60));
-            }
+            var matchViewModel = this.matchRepository
+                                  .AllAsNoTracking()
+                                  .Where(x => x.StartDate >= DateTime.UtcNow &&
+                                              x.StartDate <= DateTime.UtcNow.AddHours(24))
+                                  .To<MatchViewModel>()
+                                  .ToList();
 
             return matchViewModel;
         }
 
         public MatchSearchByIdViewModel GetMatchById(string id)
         {
-            MatchSearchByIdViewModel matchViewModel;
-
-            if (!this.memoryCache.TryGetValue<MatchSearchByIdViewModel>(
-                nameof(this.GetMatchById), out matchViewModel))
-            {
-                matchViewModel = this.matchRepository
-                                     .AllAsNoTracking()
-                                     .To<MatchSearchByIdViewModel>()
-                                     .FirstOrDefault(x => x.Id == id);
-
-                this.memoryCache.Set(
-                    nameof(this.GetMatchById), matchViewModel, TimeSpan.FromSeconds(60));
-            }
+            var matchViewModel = this.matchRepository
+                                   .AllAsNoTracking()
+                                   .To<MatchSearchByIdViewModel>()
+                                   .FirstOrDefault(x => x.Id == id);
 
             return matchViewModel;
         }

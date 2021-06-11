@@ -4,23 +4,29 @@
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
+    using UltraBet.Common;
+    using UltraBet.Services;
     using UltraBet.Services.Data;
     using UltraBet.Web.ViewModels;
 
     public class HomeController : BaseController
     {
-        private readonly ISportService sportDataService;
+        private readonly ISportService sportService;
+        private readonly ISportDataService sportDataService;
 
-        public HomeController(ISportService sportDataService)
+        public HomeController(ISportService sportService, ISportDataService sportDataService)
         {
+            this.sportService = sportService;
             this.sportDataService = sportDataService;
         }
 
         public async Task<IActionResult> Index()
         {
-            //await this.sportDataService.StoreDataAsync();
-            this.sportDataService.GetMatchById("2014802");
-            this.sportDataService.GetMatchesInNextTwentyFourHours();
+            var data = await this.sportDataService.GetSportDataAsync(GlobalConstants.SportDataUrl);
+
+            await this.sportService.StoreDataAsync(data);
+            this.sportService.GetMatchesInNextTwentyFourHours();
+            // this.sportService.GetMatchById("2014802");
 
             return this.View();
         }

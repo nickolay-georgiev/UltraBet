@@ -5,9 +5,11 @@
 
     public class Deserializer : IDeserializer
     {
-        public T Deserialize<T>(string input, string xmlRootAttribute)
+        private const string XmlRootAttribute = "XmlSports";
+
+        public T Deserialize<T>(string input)
         {
-            var xmlSerializer = new XmlSerializer(typeof(T), new XmlRootAttribute(xmlRootAttribute));
+            var xmlSerializer = new XmlSerializer(typeof(T), new XmlRootAttribute(XmlRootAttribute));
 
             using var stringReader = new StringReader(input);
 

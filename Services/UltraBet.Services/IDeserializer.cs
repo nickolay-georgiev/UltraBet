@@ -2,6 +2,6 @@
 {
     public interface IDeserializer
     {
-        T Deserialize<T>(string input, string xmlRootAttribute);
+        T Deserialize<T>(string input);
     }
 }

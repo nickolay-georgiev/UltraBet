@@ -19,7 +19,7 @@
 
         public int TypeId { get; set; }
 
-        public MatchType Type { get; set; }
+        public virtual MatchType Type { get; set; }
 
         public string EventId { get; set; }
 
