@@ -50,11 +50,7 @@
 
         public async Task StoreDataAsync(XmlSportsDto data)
         {
-            var oddNamesWithIds = this.oddNameRepository
-                .AllAsNoTracking()
-                .ToList()
-                .GroupBy(x => x.Name)
-                .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
+            Dictionary<string, int> oddNamesWithIds = NewMethod();
 
             var matchTypesWithIds = this.matchTypeRepository
                 .AllAsNoTracking()
@@ -164,24 +160,24 @@
                     {
                         foreach (var betDto in matchDto.Bets)
                         {
-                            var betName = this.betNameRepository
-                                .All()
-                                .FirstOrDefault(x => x.Name == betDto.Name);
-
-                            if (betName is null)
-                            {
-                                betName = new BetName { Name = betDto.Name };
-
-                                await this.betNameRepository.AddAsync(betName);
-                                await this.betNameRepository.SaveChangesAsync();
-                            }
-
                             var currentBet = this.betRepository
                                  .All()
                                  .FirstOrDefault(x => x.Id == betDto.Id);
 
                             if (currentBet is null)
                             {
+                                var betName = this.betNameRepository
+                                    .All()
+                                    .FirstOrDefault(x => x.Name == betDto.Name);
+
+                                if (betName is null)
+                                {
+                                    betName = new BetName { Name = betDto.Name };
+
+                                    await this.betNameRepository.AddAsync(betName);
+                                    await this.betNameRepository.SaveChangesAsync();
+                                }
+
                                 currentBet = new Bet
                                 {
                                     Id = betDto.Id,
@@ -263,6 +259,15 @@
 
             // ~25sek
             var time = watch.Elapsed;
+        }
+
+        private Dictionary<string, int> NewMethod()
+        {
+            return this.oddNameRepository
+                .AllAsNoTracking()
+                .ToList()
+                .GroupBy(x => x.Name)
+                .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
         }
 
         public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()

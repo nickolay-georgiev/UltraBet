@@ -34,6 +34,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\Data\UltraBet.Data\UltraBet.Data.csproj" />
 		<ProjectReference Include="..\..\Services\UltraBet.Services.Data\UltraBet.Services.Data.csproj" />
+		<ProjectReference Include="..\..\Web\UltraBet.Web\UltraBet.Web.csproj" />
 	</ItemGroup>
 
 </Project>

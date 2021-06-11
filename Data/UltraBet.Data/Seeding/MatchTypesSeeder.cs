@@ -13,7 +13,7 @@
     {
         public async Task SeedAsync(ApplicationDbContext dbContext, IServiceProvider serviceProvider)
         {
-            var initialTypes = new List<MatchType>();
+            var initialMatchTypes = new List<MatchType>();
 
             var liveType = new MatchType
             {
@@ -25,21 +25,21 @@
                 Name = GlobalConstants.PrematchMatchType,
             };
 
-            initialTypes.Add(liveType);
-            initialTypes.Add(prematchType);
+            initialMatchTypes.Add(liveType);
+            initialMatchTypes.Add(prematchType);
 
-            await SeedTypesAsync(initialTypes, dbContext);
+            await SeedTypesAsync(initialMatchTypes, dbContext);
         }
 
-        private static async Task SeedTypesAsync(List<MatchType> initialTypes, ApplicationDbContext dbContext)
+        private static async Task SeedTypesAsync(List<MatchType> initialMatchTypes, ApplicationDbContext dbContext)
         {
-            foreach (var item in initialTypes)
+            foreach (var type in initialMatchTypes)
             {
-                var currentType = dbContext.MatchTypes.FirstOrDefault(x => x.Name == item.Name);
+                var currentType = dbContext.MatchTypes.FirstOrDefault(x => x.Name == type.Name);
 
                 if (currentType is null)
                 {
-                    await dbContext.MatchTypes.AddAsync(item);
+                    await dbContext.MatchTypes.AddAsync(type);
                     await dbContext.SaveChangesAsync();
                 }
             }
