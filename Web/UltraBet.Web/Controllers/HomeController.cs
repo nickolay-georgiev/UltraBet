@@ -1,13 +1,11 @@
 ﻿namespace UltraBet.Web.Controllers
 {
-    using System.Diagnostics;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
     using UltraBet.Common;
     using UltraBet.Services;
     using UltraBet.Services.Data;
-    using UltraBet.Web.ViewModels;
 
     public class HomeController : BaseController
     {

@@ -29,9 +29,9 @@
 
         public DbSet<Match> Matches { get; set; }
 
-        public DbSet<Bet> Bets { get; set; }
+        public DbSet<Market> Markets { get; set; }
 
-        public DbSet<BetName> BetNames { get; set; }
+        public DbSet<MarketName> MarketNames { get; set; }
 
         public DbSet<Odd> Odds { get; set; }
 
@@ -44,6 +44,8 @@
         public DbSet<UpdatedModel> UpdatedModels { get; set; }
 
         public DbSet<OddName> OddNames { get; set; }
+
+        public DbSet<EventCategory> EventCategories { get; set; }
 
         public override int SaveChanges() => this.SaveChanges(true);
 

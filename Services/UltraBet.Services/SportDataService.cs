@@ -3,7 +3,6 @@
     using System.Net.Http;
     using System.Threading.Tasks;
 
-    using UltraBet.Common;
     using UltraBet.Services.Models;
 
     public class SportDataService : ISportDataService

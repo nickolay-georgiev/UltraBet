@@ -9,7 +9,7 @@
 
     public class MatchSearchByIdViewModel : BaseMatchViewModel, IHaveCustomMappings
     {
-        public ICollection<BetInMatchSearchByIdViewModel> Bets { get; set; }
+        public ICollection<MarketInMatchSearchByIdViewModel> Markets { get; set; }
 
         public void CreateMappings(IProfileExpression configuration)
         {

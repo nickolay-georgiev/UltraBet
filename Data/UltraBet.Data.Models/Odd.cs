@@ -14,8 +14,8 @@
 
         public virtual OddName OddName { get; set; }
 
-        public string BetId { get; set; }
+        public string MarketId { get; set; }
 
-        public virtual Bet Bet { get; set; }
+        public virtual Market Market { get; set; }
     }
 }

@@ -21,7 +21,6 @@
     using UltraBet.Data.Seeding;
     using UltraBet.Services;
     using UltraBet.Services.Data;
-    using UltraBet.Services.Data.CronJobs;
     using UltraBet.Services.Mapping;
     using UltraBet.Web.Hubs;
     using UltraBet.Web.ViewModels;

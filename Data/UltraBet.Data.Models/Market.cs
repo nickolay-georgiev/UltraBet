@@ -4,9 +4,9 @@
 
     using UltraBet.Data.Common.Models;
 
-    public class Bet : BaseDeletableModel<string>
+    public class Market : BaseDeletableModel<string>
     {
-        public Bet()
+        public Market()
         {
             this.Odds = new HashSet<Odd>();
         }
@@ -17,9 +17,9 @@
 
         public virtual Match Match { get; set; }
 
-        public int BetNameId { get; set; }
+        public int MarketNameId { get; set; }
 
-        public virtual BetName BetName { get; set; }
+        public virtual MarketName MarketName { get; set; }
 
         public virtual ICollection<Odd> Odds { get; set; }
     }

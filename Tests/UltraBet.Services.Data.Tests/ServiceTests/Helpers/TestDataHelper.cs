@@ -7,7 +7,7 @@
 
     public class TestDataHelper
     {
-        public static List<Match> GetTestMatchesModels()
+        public List<Match> GetTestMatchesModels()
         {
             return new List<Match>
             {
@@ -28,20 +28,20 @@
                             Team = new Team { Name = "Nigma", Id = 2 },
                         },
                     },
-                    StartDate = DateTime.Now.AddMinutes(30),
+                    StartDate = DateTime.UtcNow.AddSeconds(1),
                     TypeId = 1,
                     Type = new MatchType { Name = "Live" },
                     EventId = "1",
                     Event = new Event {Id = "1", Name = "test" },
-                    Bets = new List<Bet>
+                    Markets = new List<Market>
                     {
-                        new Bet
+                        new Market
                         {
                             Id = "1",
                             IsLive = true,
                             MatchId = "1",
-                            BetNameId = 1,
-                            BetName = new BetName { Name = "Match Winner" },
+                            MarketNameId = 1,
+                            MarketName = new MarketName { Name = "Match Winner" },
                             Odds = new List<Odd>
                             {
                                 new Odd
@@ -81,20 +81,20 @@
                             Team = new Team { Name = "Brame", Id = 4 },
                         },
                     },
-                    StartDate = DateTime.Now.AddMinutes(30),
+                    StartDate = DateTime.UtcNow.AddHours(23).AddMinutes(59),
                     TypeId = 1,
                     Type = new MatchType { Name = "Live" },
                     EventId = "1",
                     Event = new Event {Id = "1", Name = "test" },
-                    Bets = new List<Bet>
+                    Markets = new List<Market>
                     {
-                        new Bet
+                        new Market
                         {
                             Id = "2",
                             IsLive = true,
                             MatchId = "2",
-                            BetNameId = 2,
-                            BetName = new BetName { Name = "Total Maps Played" },
+                            MarketNameId = 2,
+                            MarketName = new MarketName { Name = "Total Maps Played" },
                             Odds = new List<Odd>
                             {
                                 new Odd
@@ -134,20 +134,20 @@
                             Team = new Team { Name = "Hippomaniacs", Id = 6 },
                         },
                     },
-                    StartDate = DateTime.Now.AddMinutes(30),
+                    StartDate = DateTime.UtcNow.AddHours(15),
                     TypeId = 1,
                     Type = new MatchType { Name = "Live" },
                     EventId = "1",
                     Event = new Event {Id = "1", Name = "test" },
-                    Bets = new List<Bet>
+                    Markets = new List<Market>
                     {
-                        new Bet
+                        new Market
                         {
                             Id = "3",
                             IsLive = true,
                             MatchId = "3",
-                            BetNameId = 3,
-                            BetName = new BetName { Name = "Map Advantage" },
+                            MarketNameId = 3,
+                            MarketName = new MarketName { Name = "Map Advantage" },
                             Odds = new List<Odd>
                             {
                                 new Odd
@@ -187,20 +187,20 @@
                             Team = new Team { Name = "eSuba", Id = 8 },
                         },
                     },
-                    StartDate = DateTime.Now.AddDays(3),
+                    StartDate = DateTime.UtcNow.AddDays(3),
                     TypeId = 1,
                     Type = new MatchType { Name = "Live" },
                     EventId = "1",
                     Event = new Event {Id = "1", Name = "test" },
-                    Bets = new List<Bet>
+                    Markets = new List<Market>
                     {
-                        new Bet
+                        new Market
                         {
                             Id = "4",
                             IsLive = true,
                             MatchId = "4",
-                            BetNameId = 4,
-                            BetName = new BetName { Name = "Invalid" },
+                            MarketNameId = 4,
+                            MarketName = new MarketName { Name = "Invalid" },
                             Odds = new List<Odd>
                             {
                                 new Odd
@@ -226,7 +226,7 @@
             };
         }
 
-        public static Sport GetTestSportModel()
+        public Sport GetTestSportModel()
         {
             return new Sport
             {
@@ -239,7 +239,7 @@
                         Id = "1",
                         Name = "Dota 2",
                         IsLive = false,
-                        CategoryId = "123",
+                        EventCategory = new EventCategory { Name = "123" },
                     },
                 },
             };

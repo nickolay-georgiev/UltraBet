@@ -6,7 +6,6 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    using Microsoft.Extensions.Caching.Memory;
     using UltraBet.Common;
     using UltraBet.Data.Common.Repositories;
     using UltraBet.Data.Models;
@@ -16,47 +15,63 @@
 
     public class SportService : ISportService
     {
-        private readonly IDeletableEntityRepository<Bet> betRepository;
+        private readonly IDeletableEntityRepository<Market> marketRepository;
         private readonly IDeletableEntityRepository<Odd> oddRepository;
         private readonly IDeletableEntityRepository<Team> teamRepository;
         private readonly IDeletableEntityRepository<Event> eventRepository;
         private readonly IDeletableEntityRepository<Sport> sportRepository;
         private readonly IDeletableEntityRepository<Match> matchRepository;
-        private readonly IRepository<BetName> betNameRepository;
+        private readonly IRepository<MarketName> marketNameRepository;
         private readonly IRepository<OddName> oddNameRepository;
         private readonly IRepository<MatchType> matchTypeRepository;
+        private readonly IRepository<EventCategory> eventCategoryRepository;
 
         public SportService(
-            IDeletableEntityRepository<Bet> betRepository,
+            IDeletableEntityRepository<Market> betRepository,
             IDeletableEntityRepository<Odd> oddRepository,
             IDeletableEntityRepository<Team> teamRepository,
             IDeletableEntityRepository<Event> eventRepository,
             IDeletableEntityRepository<Sport> sportRepository,
             IDeletableEntityRepository<Match> matchRepository,
-            IRepository<BetName> betNameRepository,
+            IRepository<MarketName> betNameRepository,
             IRepository<OddName> oddNameRepository,
-            IRepository<MatchType> matchTypeRepository)
+            IRepository<MatchType> matchTypeRepository,
+            IRepository<EventCategory> eventCategoryRepository)
         {
-            this.betRepository = betRepository;
+            this.marketRepository = betRepository;
             this.oddRepository = oddRepository;
             this.teamRepository = teamRepository;
             this.eventRepository = eventRepository;
             this.sportRepository = sportRepository;
             this.matchRepository = matchRepository;
-            this.betNameRepository = betNameRepository;
+            this.marketNameRepository = betNameRepository;
             this.oddNameRepository = oddNameRepository;
             this.matchTypeRepository = matchTypeRepository;
+            this.eventCategoryRepository = eventCategoryRepository;
         }
 
         public async Task StoreDataAsync(XmlSportsDto data)
         {
-            Dictionary<string, int> oddNamesWithIds = NewMethod();
+            // 23 total
+            var oddNamesWithIds = this.oddNameRepository
+                .AllAsNoTracking()
+                .ToList()
+                .GroupBy(x => x.Name)
+                .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
 
+            // 2 total
             var matchTypesWithIds = this.matchTypeRepository
                 .AllAsNoTracking()
                 .ToList()
                 .GroupBy(x => x.Name)
                 .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
+
+            // 11 total
+            var eventCategoriesWithIds = this.eventCategoryRepository
+               .AllAsNoTracking()
+               .ToList()
+               .GroupBy(x => x.Name)
+               .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
 
             var watch = new Stopwatch();
             watch.Start();
@@ -85,13 +100,25 @@
 
                 if (currentEvent is null)
                 {
+                    if (!eventCategoriesWithIds.ContainsKey(eventDto.CategoryId))
+                    {
+                        var eventCategory = new EventCategory { Name = eventDto.CategoryId };
+
+                        await this.eventCategoryRepository.AddAsync(eventCategory);
+                        await this.eventCategoryRepository.SaveChangesAsync();
+
+                        eventCategoriesWithIds.Add(eventCategory.Name, eventCategory.Id);
+                    }
+
+                    var eventCategoryId = eventCategoriesWithIds[eventDto.CategoryId];
+
                     currentEvent = new Event
                     {
                         Name = eventDto.Name,
                         Id = eventDto.Id,
                         IsLive = eventDto.IsLive,
-                        CategoryId = eventDto.CategoryId,
                         SportId = sport.Id,
+                        EventCategoryId = eventCategoryId,
                     };
 
                     sport.Events.Add(currentEvent);
@@ -158,40 +185,40 @@
 
                     if (matchDto.Bets is not null)
                     {
-                        foreach (var betDto in matchDto.Bets)
+                        foreach (var marketDto in matchDto.Bets)
                         {
-                            var currentBet = this.betRepository
+                            var currentMarket = this.marketRepository
                                  .All()
-                                 .FirstOrDefault(x => x.Id == betDto.Id);
+                                 .FirstOrDefault(x => x.Id == marketDto.Id);
 
-                            if (currentBet is null)
+                            if (currentMarket is null)
                             {
-                                var betName = this.betNameRepository
+                                var marketName = this.marketNameRepository
                                     .All()
-                                    .FirstOrDefault(x => x.Name == betDto.Name);
+                                    .FirstOrDefault(x => x.Name == marketDto.Name);
 
-                                if (betName is null)
+                                if (marketName is null)
                                 {
-                                    betName = new BetName { Name = betDto.Name };
+                                    marketName = new MarketName { Name = marketDto.Name };
 
-                                    await this.betNameRepository.AddAsync(betName);
-                                    await this.betNameRepository.SaveChangesAsync();
+                                    await this.marketNameRepository.AddAsync(marketName);
+                                    await this.marketNameRepository.SaveChangesAsync();
                                 }
 
-                                currentBet = new Bet
+                                currentMarket = new Market
                                 {
-                                    Id = betDto.Id,
-                                    BetNameId = betName.Id,
-                                    IsLive = betDto.IsLive,
+                                    Id = marketDto.Id,
+                                    MarketNameId = marketName.Id,
+                                    IsLive = marketDto.IsLive,
                                     MatchId = currentMatch.Id,
                                 };
 
-                                currentMatch.Bets.Add(currentBet);
+                                currentMatch.Markets.Add(currentMarket);
                             }
 
                             int counter = 1;
                             string previousSpecialBetValue = null;
-                            foreach (var oddDto in betDto.Odds)
+                            foreach (var oddDto in marketDto.Odds)
                             {
                                 var currentOdd = this.oddRepository
                                      .All()
@@ -216,11 +243,11 @@
                                         Id = oddDto.Id,
                                         Value = oddDto.Value,
                                         SpecialBetValue = oddDto.SpecialBetValue,
-                                        BetId = currentBet.Id,
+                                        MarketId = currentMarket.Id,
                                         OddNameId = oddNameId,
                                     };
 
-                                    currentBet.Odds.Add(currentOdd);
+                                    currentMarket.Odds.Add(currentOdd);
                                 }
                                 else if (currentOdd.Value != oddDto.Value)
                                 {
@@ -261,23 +288,18 @@
             var time = watch.Elapsed;
         }
 
-        private Dictionary<string, int> NewMethod()
+        public static void bl_ProcessCompleted(object sender, bool IsSuccessful)
         {
-            return this.oddNameRepository
-                .AllAsNoTracking()
-                .ToList()
-                .GroupBy(x => x.Name)
-                .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
+            Console.WriteLine("Process " + (IsSuccessful ? "Completed Successfully" : "failed"));
         }
 
         public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
         {
             var matchViewModel = this.matchRepository
-                                  .AllAsNoTracking()
-                                  .Where(x => x.StartDate >= DateTime.UtcNow &&
-                                              x.StartDate <= DateTime.UtcNow.AddHours(24))
-                                  .To<MatchViewModel>()
-                                  .ToList();
+                 .AllAsNoTracking()
+                 .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
+                 .To<MatchViewModel>()
+                 .ToList();
 
             return matchViewModel;
         }
@@ -285,9 +307,9 @@
         public MatchSearchByIdViewModel GetMatchById(string id)
         {
             var matchViewModel = this.matchRepository
-                                   .AllAsNoTracking()
-                                   .To<MatchSearchByIdViewModel>()
-                                   .FirstOrDefault(x => x.Id == id);
+                 .AllAsNoTracking()
+                 .To<MatchSearchByIdViewModel>()
+                 .FirstOrDefault(x => x.Id == id);
 
             return matchViewModel;
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace UltraBet.Data.Migrations
@@ -67,6 +68,21 @@ namespace UltraBet.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BetNames", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventCategories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedOn = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventCategories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -261,8 +277,8 @@ namespace UltraBet.Data.Migrations
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsLive = table.Column<bool>(type: "bit", nullable: false),
-                    CategoryId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SportId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    EventCategoryId = table.Column<int>(type: "int", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedOn = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -271,6 +287,12 @@ namespace UltraBet.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Events_EventCategories_EventCategoryId",
+                        column: x => x.EventCategoryId,
+                        principalTable: "EventCategories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Events_Sports_SportId",
                         column: x => x.SportId,
@@ -461,6 +483,11 @@ namespace UltraBet.Data.Migrations
                 column: "MatchId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Events_EventCategoryId",
+                table: "Events",
+                column: "EventCategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Events_IsDeleted",
                 table: "Events",
                 column: "IsDeleted");
@@ -568,6 +595,9 @@ namespace UltraBet.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "MatchTypes");
+
+            migrationBuilder.DropTable(
+                name: "EventCategories");
 
             migrationBuilder.DropTable(
                 name: "Sports");

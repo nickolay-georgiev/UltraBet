@@ -7,16 +7,16 @@
     using UltraBet.Data.Models;
     using UltraBet.Services.Mapping;
 
-    public class BetViewModel : BaseBetViewModel, IHaveCustomMappings
+    public class MarketViewModel : BaseMarketViewModel, IHaveCustomMappings
     {
         public void CreateMappings(IProfileExpression configuration)
         {
-            configuration.CreateMap<Bet, BetViewModel>()
+            configuration.CreateMap<Market, MarketViewModel>()
                 .ForMember(x => x.Odds, opt =>
                     opt.MapFrom(x => x.Odds
                        .Where(x => x.GroupNumber == GlobalConstants.DefaultGroupNumber)))
                 .ForMember(x => x.Name, opt =>
-                    opt.MapFrom(x => x.BetName.Name));
+                    opt.MapFrom(x => x.MarketName.Name));
         }
     }
 }

@@ -4,13 +4,13 @@
     using UltraBet.Data.Models;
     using UltraBet.Services.Mapping;
 
-    public class BetInMatchSearchByIdViewModel : BaseBetViewModel, IHaveCustomMappings
+    public class MarketInMatchSearchByIdViewModel : BaseMarketViewModel, IHaveCustomMappings
     {
         public void CreateMappings(IProfileExpression configuration)
         {
-            configuration.CreateMap<Bet, BetInMatchSearchByIdViewModel>()
+            configuration.CreateMap<Market, MarketInMatchSearchByIdViewModel>()
                 .ForMember(x => x.Name, opt =>
-                    opt.MapFrom(x => x.BetName.Name));
+                    opt.MapFrom(x => x.MarketName.Name));
         }
     }
 }

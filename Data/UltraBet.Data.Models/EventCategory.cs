@@ -4,10 +4,10 @@
 
     using UltraBet.Data.Common.Models;
 
-    public class BetName : BaseModel<int>
+    public class EventCategory : BaseModel<int>
     {
         public string Name { get; set; }
 
-        public virtual ICollection<Bet> Bets { get; set; }
+        public virtual ICollection<Event> Events { get; set; }
     }
 }

@@ -3,21 +3,14 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Net.Http;
-    using System.Reflection;
     using System.Threading.Tasks;
-    using Microsoft.EntityFrameworkCore;
+
     using Moq;
     using NUnit.Framework;
-    using UltraBet.Data;
     using UltraBet.Data.Common.Repositories;
     using UltraBet.Data.Models;
     using UltraBet.Data.Repositories;
     using UltraBet.Services.Data.Tests.ServiceTests.Helpers;
-    using UltraBet.Services.Mapping;
-    using UltraBet.Services.Models;
-    using UltraBet.Web.Controllers;
-    using UltraBet.Web.ViewModels;
 
     using Match = UltraBet.Data.Models.Match;
 
@@ -26,61 +19,65 @@
     {
         private ISportService sportService;
         private IQueryable<Match> testMatches;
-        private Mock<IDeletableEntityRepository<Bet>> mockBetRepository;
+        private Mock<IDeletableEntityRepository<Market>> mockMarketRepository;
         private Mock<IDeletableEntityRepository<Odd>> mockOddRepository;
         private Mock<IDeletableEntityRepository<Team>> mockTeamRepository;
         private Mock<IDeletableEntityRepository<Event>> mockEventRepository;
         private Mock<IDeletableEntityRepository<Sport>> mockSportRepository;
         private Mock<IDeletableEntityRepository<Match>> mockMatchRepository;
-        private Mock<IRepository<BetName>> mockBetNameRepository;
+        private Mock<IRepository<MarketName>> mockMarketNameRepository;
         private Mock<IRepository<OddName>> mockOddNameRepository;
         private Mock<IRepository<MatchType>> mockMatchTypeRepository;
-
-        public SportServiceTests()
-        {
-            AutoMapperConfig.RegisterMappings(typeof(MatchViewModel).GetTypeInfo().Assembly);
-        }
+        private Mock<IRepository<EventCategory>> mockEventCategoryRepository;
 
         [SetUp]
         public void Setup()
         {
-            this.mockBetRepository = new Mock<IDeletableEntityRepository<Bet>>();
+            AutoMapperInitializer.Init();
+            this.mockMarketRepository = new Mock<IDeletableEntityRepository<Market>>();
             this.mockOddRepository = new Mock<IDeletableEntityRepository<Odd>>();
             this.mockTeamRepository = new Mock<IDeletableEntityRepository<Team>>();
             this.mockEventRepository = new Mock<IDeletableEntityRepository<Event>>();
             this.mockSportRepository = new Mock<IDeletableEntityRepository<Sport>>();
             this.mockMatchRepository = new Mock<IDeletableEntityRepository<Match>>();
-            this.mockBetNameRepository = new Mock<IRepository<BetName>>();
+            this.mockMarketNameRepository = new Mock<IRepository<MarketName>>();
             this.mockOddNameRepository = new Mock<IRepository<OddName>>();
             this.mockMatchTypeRepository = new Mock<IRepository<MatchType>>();
+            this.mockEventCategoryRepository = new Mock<IRepository<EventCategory>>();
 
-            this.testMatches = TestDataHelper.GetTestMatchesModels().AsQueryable();
+            this.testMatches = new TestDataHelper().GetTestMatchesModels().AsQueryable();
             this.mockMatchRepository.Setup(x => x.AllAsNoTracking()).Returns(this.testMatches);
 
             this.sportService = new SportService(
-               this.mockBetRepository.Object,
+               this.mockMarketRepository.Object,
                this.mockOddRepository.Object,
                this.mockTeamRepository.Object,
                this.mockEventRepository.Object,
                this.mockSportRepository.Object,
                this.mockMatchRepository.Object,
-               this.mockBetNameRepository.Object,
+               this.mockMarketNameRepository.Object,
                this.mockOddNameRepository.Object,
-               this.mockMatchTypeRepository.Object);
+               this.mockMatchTypeRepository.Object,
+               this.mockEventCategoryRepository.Object);
         }
 
         [Test]
         public void GetMatchesInNext24HoursShouldReturnOnlyMatchesInNext24Hours()
         {
-            var totalMatches = this.sportService.GetMatchesInNextTwentyFourHours();
-            Assert.That(totalMatches.Count() == 3);
+            var matches = this.sportService.GetMatchesInNextTwentyFourHours();
+
+            var matchesStartDates = matches
+               .Select(x => x.StartDate)
+               .ToList();
+
+            Assert.That(matchesStartDates, Is.All.GreaterThan(DateTime.Now).Or.All.LessThan(DateTime.Now.AddHours(24)));
         }
 
         [Test]
         public void GetMatchesInNext24HoursReturnCorrectPreviewMarkets()
         {
             var matches = this.sportService.GetMatchesInNextTwentyFourHours();
-            var betTypes = matches.SelectMany(x => x.Bets.Select(x => x.Name)).ToList();
+            var betTypes = matches.SelectMany(x => x.Markets.Select(x => x.Name)).ToList();
 
             var allowedPreviewMarkets = new List<string>
             { "Total Maps Played", "Match Winner", "Map Advantage" };
@@ -97,7 +94,7 @@
             Assert.That(match.Name == "Navi - Nigma");
             Assert.That(match.Teams[0] == "Navi");
             Assert.That(match.Teams[1] == "Nigma");
-            Assert.That(match.Bets.Count == 1);
+            Assert.That(match.Markets.Count == 1);
         }
 
         [Test]
@@ -106,7 +103,7 @@
             var context = ApplicationDbContextInMemoryFactory.InitializeContext();
             var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
 
-            var testSport = TestDataHelper.GetTestSportModel();
+            var testSport = new TestDataHelper().GetTestSportModel();
 
             foreach (var match in this.testMatches.ToList())
             {
@@ -127,7 +124,7 @@
             var context = ApplicationDbContextInMemoryFactory.InitializeContext();
             var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
 
-            var testSport = TestDataHelper.GetTestSportModel();
+            var testSport = new TestDataHelper().GetTestSportModel();
 
             foreach (var match in this.testMatches.ToList())
             {
@@ -161,12 +158,12 @@
         }
 
         [Test]
-        public async Task ChangeOfMachDateWorksCorrectly()
+        public async Task ChangeOfMachStartDateWorksCorrectly()
         {
             var context = ApplicationDbContextInMemoryFactory.InitializeContext();
             var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
 
-            var testSport = TestDataHelper.GetTestSportModel();
+            var testSport = new TestDataHelper().GetTestSportModel();
 
             foreach (var match in this.testMatches.ToList())
             {
@@ -201,12 +198,12 @@
         }
 
         [Test]
-        public async Task ChangeOfOddValueWorksCorrectly()
+        public async Task ChangeOfMarketValueWorksCorrectly()
         {
             var context = ApplicationDbContextInMemoryFactory.InitializeContext();
             var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
 
-            var testSport = TestDataHelper.GetTestSportModel();
+            var testSport = new TestDataHelper().GetTestSportModel();
 
             foreach (var match in this.testMatches.ToList())
             {
@@ -224,7 +221,7 @@
 
             foreach (var match in insertedMatches)
             {
-                foreach (var bet in match.Bets)
+                foreach (var bet in match.Markets)
                 {
                     foreach (var odd in bet.Odds)
                     {
@@ -240,7 +237,7 @@
                 .AllAsNoTracking()
                 .Select(x => x.Events
                 .SelectMany(x => x.Matches
-                .SelectMany(x => x.Bets
+                .SelectMany(x => x.Markets
                 .SelectMany(x => x.Odds
                 .Select(x => x.Value)))))
                 .SelectMany(x => x)

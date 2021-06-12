@@ -5,7 +5,7 @@
     using UltraBet.Data.Models;
     using UltraBet.Services.Mapping;
 
-    public class BaseBetViewModel : IMapFrom<Bet>
+    public class BaseMarketViewModel : IMapFrom<Market>
     {
         public string Id { get; set; }
 

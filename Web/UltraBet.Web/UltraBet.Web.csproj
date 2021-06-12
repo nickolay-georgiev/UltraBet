@@ -34,7 +34,6 @@
     <ProjectReference Include="..\..\Services\UltraBet.Services.Data\UltraBet.Services.Data.csproj" />
     <ProjectReference Include="..\..\Services\UltraBet.Services.Mapping\UltraBet.Services.Mapping.csproj" />
     <ProjectReference Include="..\..\Services\UltraBet.Services\UltraBet.Services.csproj" />
-    <ProjectReference Include="..\UltraBet.Web.Infrastructure\UltraBet.Web.Infrastructure.csproj" />
     <ProjectReference Include="..\UltraBet.Web.ViewModels\UltraBet.Web.ViewModels.csproj" />
   </ItemGroup>
 </Project>

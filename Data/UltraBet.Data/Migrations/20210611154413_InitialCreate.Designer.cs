@@ -10,7 +10,7 @@ using UltraBet.Data;
 namespace UltraBet.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210610092802_InitialCreate")]
+    [Migration("20210611154413_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -308,14 +308,14 @@ namespace UltraBet.Data.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("CategoryId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DeletedOn")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("EventCategoryId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -334,11 +334,34 @@ namespace UltraBet.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EventCategoryId");
+
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("SportId");
 
                     b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("UltraBet.Data.Models.EventCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EventCategories");
                 });
 
             modelBuilder.Entity("UltraBet.Data.Models.Match", b =>
@@ -631,9 +654,17 @@ namespace UltraBet.Data.Migrations
 
             modelBuilder.Entity("UltraBet.Data.Models.Event", b =>
                 {
+                    b.HasOne("UltraBet.Data.Models.EventCategory", "EventCategory")
+                        .WithMany("Events")
+                        .HasForeignKey("EventCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("UltraBet.Data.Models.Sport", "Sport")
                         .WithMany("Events")
                         .HasForeignKey("SportId");
+
+                    b.Navigation("EventCategory");
 
                     b.Navigation("Sport");
                 });
@@ -713,6 +744,11 @@ namespace UltraBet.Data.Migrations
             modelBuilder.Entity("UltraBet.Data.Models.Event", b =>
                 {
                     b.Navigation("Matches");
+                });
+
+            modelBuilder.Entity("UltraBet.Data.Models.EventCategory", b =>
+                {
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("UltraBet.Data.Models.Match", b =>

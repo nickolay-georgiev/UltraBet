@@ -15,9 +15,11 @@
 
         public bool IsLive { get; set; }
 
-        public string CategoryId { get; set; }
-
         public string SportId { get; set; }
+
+        public int EventCategoryId { get; set; }
+
+        public virtual EventCategory EventCategory { get; set; }
 
         public virtual Sport Sport { get; set; }
 

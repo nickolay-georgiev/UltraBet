@@ -9,7 +9,7 @@
     {
         public Match()
         {
-            this.Bets = new HashSet<Bet>();
+            this.Markets = new HashSet<Market>();
             this.Teams = new HashSet<MatchesTeams>();
         }
 
@@ -25,7 +25,7 @@
 
         public virtual Event Event { get; set; }
 
-        public virtual ICollection<Bet> Bets { get; set; }
+        public virtual ICollection<Market> Markets { get; set; }
 
         public virtual ICollection<MatchesTeams> Teams { get; set; }
     }
