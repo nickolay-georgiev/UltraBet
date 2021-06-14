@@ -3,6 +3,7 @@
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
+    using UltraBet.Common;
     using UltraBet.Services;
     using UltraBet.Services.Data;
 
@@ -19,7 +20,7 @@
 
         public async Task<IActionResult> Index()
         {
-            //var data = await this.sportDataService.GetSportDataAsync(GlobalConstants.SportDataUrl);
+            //var data = await this.fetchSportDataService.GetSportDataAsync(GlobalConstants.SportDataUrl);
 
             //await this.sportService.StoreDataAsync(data);
             //this.sportService.GetMatchesInNextTwentyFourHours();

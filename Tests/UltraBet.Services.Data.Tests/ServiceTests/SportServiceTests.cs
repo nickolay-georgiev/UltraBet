@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+
     using Microsoft.Extensions.Configuration;
     using Moq;
     using NUnit.Framework;
@@ -18,57 +19,34 @@
     [TestFixture]
     public class SportServiceTests
     {
-        private ISportService sportService;
-        private IQueryable<Match> testMatches;
-        private Mock<IConfiguration> mockConfiguration;
-        private Mock<IDeletableEntityRepository<Market>> mockMarketRepository;
-        private Mock<IDeletableEntityRepository<Odd>> mockOddRepository;
-        private Mock<IDeletableEntityRepository<Team>> mockTeamRepository;
-        private Mock<IDeletableEntityRepository<Event>> mockEventRepository;
-        private Mock<IDeletableEntityRepository<Sport>> mockSportRepository;
-        private Mock<IDeletableEntityRepository<Match>> mockMatchRepository;
-        private Mock<IRepository<MarketName>> mockMarketNameRepository;
-        private Mock<IRepository<OddName>> mockOddNameRepository;
-        private Mock<IRepository<MatchType>> mockMatchTypeRepository;
-        private Mock<IRepository<EventCategory>> mockEventCategoryRepository;
-
         [SetUp]
         public void Setup()
         {
             AutoMapperInitializer.Init();
-            this.mockConfiguration = new Mock<IConfiguration>();
-            this.mockMarketRepository = new Mock<IDeletableEntityRepository<Market>>();
-            this.mockOddRepository = new Mock<IDeletableEntityRepository<Odd>>();
-            this.mockTeamRepository = new Mock<IDeletableEntityRepository<Team>>();
-            this.mockEventRepository = new Mock<IDeletableEntityRepository<Event>>();
-            this.mockSportRepository = new Mock<IDeletableEntityRepository<Sport>>();
-            this.mockMatchRepository = new Mock<IDeletableEntityRepository<Match>>();
-            this.mockMarketNameRepository = new Mock<IRepository<MarketName>>();
-            this.mockOddNameRepository = new Mock<IRepository<OddName>>();
-            this.mockMatchTypeRepository = new Mock<IRepository<MatchType>>();
-            this.mockEventCategoryRepository = new Mock<IRepository<EventCategory>>();
-
-            this.testMatches = new TestDataHelper().GetTestMatchesModels().AsQueryable();
-            this.mockMatchRepository.Setup(x => x.AllAsNoTracking()).Returns(this.testMatches);
-
-            this.sportService = new SportService(
-               this.mockConfiguration.Object,
-               this.mockMarketRepository.Object,
-               this.mockOddRepository.Object,
-               this.mockTeamRepository.Object,
-               this.mockEventRepository.Object,
-               this.mockSportRepository.Object,
-               this.mockMatchRepository.Object,
-               this.mockMarketNameRepository.Object,
-               this.mockOddNameRepository.Object,
-               this.mockMatchTypeRepository.Object,
-               this.mockEventCategoryRepository.Object);
         }
 
         [Test]
         public void GetMatchesInNext24HoursShouldReturnOnlyMatchesInNext24Hours()
         {
-            var matches = this.sportService.GetMatchesInNextTwentyFourHours();
+            var testMatches = new TestDataHelper().GetTestMatchesModels().AsQueryable();
+
+            var mockMatchRepository = new Mock<IDeletableEntityRepository<Match>>();
+            mockMatchRepository.Setup(x => x.AllAsNoTracking()).Returns(testMatches);
+
+            var sportService = new SportService(
+               new Mock<IConfiguration>().Object,
+               new Mock<IDeletableEntityRepository<Market>>().Object,
+               new Mock<IDeletableEntityRepository<Odd>>().Object,
+               new Mock<IDeletableEntityRepository<Team>>().Object,
+               new Mock<IDeletableEntityRepository<Event>>().Object,
+               new Mock<IDeletableEntityRepository<Sport>>().Object,
+               mockMatchRepository.Object,
+               new Mock<IRepository<MarketName>>().Object,
+               new Mock<IRepository<OddName>>().Object,
+               new Mock<IRepository<MatchType>>().Object,
+               new Mock<IRepository<EventCategory>>().Object);
+
+            var matches = sportService.GetMatchesInNextTwentyFourHours();
 
             var matchesStartDates = matches
                .Select(x => x.StartDate)
@@ -80,8 +58,26 @@
         [Test]
         public void GetMatchesInNext24HoursReturnCorrectPreviewMarkets()
         {
-            var matches = this.sportService.GetMatchesInNextTwentyFourHours();
-            var betTypes = matches.SelectMany(x => x.Markets.Select(x => x.Name)).ToList();
+            var testMatches = new TestDataHelper().GetTestMatchesModels().AsQueryable();
+
+            var mockMatchRepository = new Mock<IDeletableEntityRepository<Match>>();
+            mockMatchRepository.Setup(x => x.AllAsNoTracking()).Returns(testMatches);
+
+            var sportService = new SportService(
+               new Mock<IConfiguration>().Object,
+               new Mock<IDeletableEntityRepository<Market>>().Object,
+               new Mock<IDeletableEntityRepository<Odd>>().Object,
+               new Mock<IDeletableEntityRepository<Team>>().Object,
+               new Mock<IDeletableEntityRepository<Event>>().Object,
+               new Mock<IDeletableEntityRepository<Sport>>().Object,
+               mockMatchRepository.Object,
+               new Mock<IRepository<MarketName>>().Object,
+               new Mock<IRepository<OddName>>().Object,
+               new Mock<IRepository<MatchType>>().Object,
+               new Mock<IRepository<EventCategory>>().Object);
+
+            var matches = sportService.GetMatchesInNextTwentyFourHours();
+            var marketTypes = matches.SelectMany(x => x.Markets.Select(x => x.Name)).ToList();
 
             var allowedPreviewMarkets = new List<string>
             {
@@ -90,13 +86,31 @@
                 GlobalConstants.MarketTotalMapsPlayed,
             };
 
-            Assert.That(betTypes, Is.EquivalentTo(allowedPreviewMarkets));
+            Assert.That(marketTypes, Is.EquivalentTo(allowedPreviewMarkets));
         }
 
         [Test]
         public void GetMatchBuyIdWorksCorrectly()
         {
-            var match = this.sportService.GetMatchById("1");
+            var testMatches = new TestDataHelper().GetTestMatchesModels().AsQueryable();
+
+            var mockMatchRepository = new Mock<IDeletableEntityRepository<Match>>();
+            mockMatchRepository.Setup(x => x.AllAsNoTracking()).Returns(testMatches);
+
+            var sportService = new SportService(
+               new Mock<IConfiguration>().Object,
+               new Mock<IDeletableEntityRepository<Market>>().Object,
+               new Mock<IDeletableEntityRepository<Odd>>().Object,
+               new Mock<IDeletableEntityRepository<Team>>().Object,
+               new Mock<IDeletableEntityRepository<Event>>().Object,
+               new Mock<IDeletableEntityRepository<Sport>>().Object,
+               mockMatchRepository.Object,
+               new Mock<IRepository<MarketName>>().Object,
+               new Mock<IRepository<OddName>>().Object,
+               new Mock<IRepository<MatchType>>().Object,
+               new Mock<IRepository<EventCategory>>().Object);
+
+            var match = sportService.GetMatchById("1");
 
             Assert.That(match.Id == "1");
             Assert.That(match.Name == "Navi - Nigma");
@@ -106,24 +120,59 @@
         }
 
         [Test]
-        public async Task InsertSportEntityInDbWorksCorrectly()
+        public async Task GetMatchesInNext24HoursReturnCorrectOdds()
         {
+            //var listener = new SQLBrokerService("test", "test", "test");
+            //listener.Start();
+
             var context = ApplicationDbContextInMemoryFactory.InitializeContext();
-            var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
+            var mockMatchTypeRepository = new EfRepository<MatchType>(context);
 
-            var testSport = new TestDataHelper().GetTestSportModel();
-
-            foreach (var match in this.testMatches.ToList())
+            var liveType = new MatchType
             {
-                testSport.Events.FirstOrDefault().Matches.Add(match);
-            }
+                Name = GlobalConstants.LiveMatchType,
+            };
 
-            await testSportRepository.AddAsync(testSport);
-            await testSportRepository.SaveChangesAsync();
+            var prematchType = new MatchType
+            {
+                Name = GlobalConstants.PrematchMatchType,
+            };
 
-            var insertedSportEntity = testSportRepository.All().FirstOrDefault();
+            await mockMatchTypeRepository.AddAsync(liveType);
+            await mockMatchTypeRepository.AddAsync(prematchType);
+            await mockMatchTypeRepository.SaveChangesAsync();
 
-            Assert.AreEqual(insertedSportEntity, testSport);
+            var xmlSportsDto = new TestDataHelper().GetXmlSportsDto();
+
+            var sportService = new SportService(
+                  new Mock<IConfiguration>().Object,
+                  new EfDeletableEntityRepository<Market>(context),
+                  new EfDeletableEntityRepository<Odd>(context),
+                  new EfDeletableEntityRepository<Team>(context),
+                  new EfDeletableEntityRepository<Event>(context),
+                  new EfDeletableEntityRepository<Sport>(context),
+                  new EfDeletableEntityRepository<Match>(context),
+                  new EfRepository<MarketName>(context),
+                  new EfRepository<OddName>(context),
+                  mockMatchTypeRepository,
+                  new EfRepository<EventCategory>(context));
+
+            await sportService.StoreDataAsync(xmlSportsDto);
+
+            var matches = sportService.GetMatchesInNextTwentyFourHours();
+
+            var oddsSpecialBetValues = matches
+                .Where(x => x.Id == "1")
+                .SelectMany(x => x.Markets
+                .SelectMany(x => x.Odds))
+                .Select(x => x.SpecialBetValue)
+                .ToList();
+
+            var validMatchesCount = 3;
+            var valueOfFirstGroupOddsWithSpecialBetValue = "7";
+
+            Assert.That(matches.Count() == validMatchesCount);
+            Assert.That(oddsSpecialBetValues, Is.All.EqualTo(valueOfFirstGroupOddsWithSpecialBetValue));
         }
 
         [Test]
@@ -133,8 +182,9 @@
             var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
 
             var testSport = new TestDataHelper().GetTestSportModel();
+            var testMatches = new TestDataHelper().GetTestMatchesModels();
 
-            foreach (var match in this.testMatches.ToList())
+            foreach (var match in testMatches.ToList())
             {
                 testSport.Events.FirstOrDefault().Matches.Add(match);
             }
@@ -172,8 +222,9 @@
             var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
 
             var testSport = new TestDataHelper().GetTestSportModel();
+            var testMatches = new TestDataHelper().GetTestMatchesModels();
 
-            foreach (var match in this.testMatches.ToList())
+            foreach (var match in testMatches)
             {
                 testSport.Events.FirstOrDefault().Matches.Add(match);
             }
@@ -212,8 +263,9 @@
             var testSportRepository = new EfDeletableEntityRepository<Sport>(context);
 
             var testSport = new TestDataHelper().GetTestSportModel();
+            var testMatches = new TestDataHelper().GetTestMatchesModels();
 
-            foreach (var match in this.testMatches.ToList())
+            foreach (var match in testMatches)
             {
                 testSport.Events.FirstOrDefault().Matches.Add(match);
             }
@@ -252,238 +304,6 @@
                 .ToList();
 
             Assert.That(updatedOddValuesDates, Is.All.EqualTo(7));
-        }
-
-        [Test]
-        public async Task GetMatchesInNext24HoursReturnCorrectOdds()
-        {
-            var context = ApplicationDbContextInMemoryFactory.InitializeContext();
-            var mockTestSportRepository = new EfDeletableEntityRepository<Sport>(context);
-            var mockOddNameRepository = new EfRepository<OddName>(context);
-            var mockMarketNameRepository = new EfRepository<MarketName>(context);
-            var mockTeamRepository = new EfDeletableEntityRepository<Team>(context);
-            var mockEventCategoryRepository = new EfRepository<EventCategory>(context);
-            var mockMatchTypeRepository = new EfRepository<MatchType>(context);
-            var mockMarketRepository = new EfDeletableEntityRepository<Market>(context);
-            var mockOddRepository = new EfDeletableEntityRepository<Odd>(context);
-            var mockEventRepository = new EfDeletableEntityRepository<Event>(context);
-            var mockMatchRepository = new EfDeletableEntityRepository<Match>(context);
-
-            var liveType = new MatchType
-            {
-                Name = GlobalConstants.LiveMatchType,
-            };
-
-            var prematchType = new MatchType
-            {
-                Name = GlobalConstants.PrematchMatchType,
-            };
-
-            await mockMatchTypeRepository.AddAsync(liveType);
-            await mockMatchTypeRepository.AddAsync(prematchType);
-            await mockMatchTypeRepository.SaveChangesAsync();
-
-            var xmlSportsDto = new TestDataHelper().GetXmlSportsDto();
-
-            var sportService = new SportService(
-                  this.mockConfiguration.Object,
-                  mockMarketRepository,
-                  mockOddRepository,
-                  mockTeamRepository,
-                  mockEventRepository,
-                  mockTestSportRepository,
-                  mockMatchRepository,
-                  mockMarketNameRepository,
-                  mockOddNameRepository,
-                  mockMatchTypeRepository,
-                  mockEventCategoryRepository);
-
-            await sportService.StoreDataAsync(xmlSportsDto);
-
-            var matches = sportService.GetMatchesInNextTwentyFourHours();
-
-            var oddsSpecialBetValues = matches
-                .Where(x => x.Id == "1")
-                .SelectMany(x => x.Markets
-                .SelectMany(x => x.Odds))
-                .Select(x => x.SpecialBetValue)
-                .ToList();
-
-            var validMatchesCount = 3;
-            var valueOfFirstGroupOddsWithSpecialBetValue = "7";
-
-            Assert.That(matches.Count() == validMatchesCount);
-            Assert.That(oddsSpecialBetValues, Is.All.EqualTo(valueOfFirstGroupOddsWithSpecialBetValue));
-        }
-
-        [Test]
-        public async Task Test2()
-        {
-            var context = ApplicationDbContextInMemoryFactory.InitializeContext();
-            var mockTestSportRepository = new EfDeletableEntityRepository<Sport>(context);
-            var mockOddNameRepository = new EfRepository<OddName>(context);
-            var mockMarketNameRepository = new EfRepository<MarketName>(context);
-            var mockTeamRepository = new EfDeletableEntityRepository<Team>(context);
-            var mockEventCategoryRepository = new EfRepository<EventCategory>(context);
-            var mockMatchTypeRepository = new EfRepository<MatchType>(context);
-            var mockMarketRepository = new EfDeletableEntityRepository<Market>(context);
-            var mockOddRepository = new EfDeletableEntityRepository<Odd>(context);
-            var mockEventRepository = new EfDeletableEntityRepository<Event>(context);
-            var mockMatchRepository = new EfDeletableEntityRepository<Match>(context);
-
-            var liveType = new MatchType
-            {
-                Name = GlobalConstants.LiveMatchType,
-            };
-
-            var prematchType = new MatchType
-            {
-                Name = GlobalConstants.PrematchMatchType,
-            };
-
-            await mockMatchTypeRepository.AddAsync(liveType);
-            await mockMatchTypeRepository.AddAsync(prematchType);
-            await mockMatchTypeRepository.SaveChangesAsync();
-
-            var xmlSportsDto = new TestDataHelper().GetXmlSportsDto();
-
-            var sportService = new SportService(
-                  this.mockConfiguration.Object,
-                  mockMarketRepository,
-                  mockOddRepository,
-                  mockTeamRepository,
-                  mockEventRepository,
-                  mockTestSportRepository,
-                  mockMatchRepository,
-                  mockMarketNameRepository,
-                  mockOddNameRepository,
-                  mockMatchTypeRepository,
-                  mockEventCategoryRepository);
-
-            await sportService.StoreDataAsync(xmlSportsDto);
-
-            foreach (var item in xmlSportsDto.SportDto.Events)
-            {
-                foreach (var match in item.Matches)
-                {
-                    foreach (var market in match.Bets)
-                    {
-                        foreach (var odd in market.Odds)
-                        {
-                            odd.Value = 777;
-                        }
-                    }
-                }
-            }
-
-            await sportService.StoreDataAsync(xmlSportsDto);
-
-            var matches = sportService.GetMatchesInNextTwentyFourHours();
-
-            var oddsSpecialBetValues = matches
-                .Where(x => x.Id == "1")
-                .SelectMany(x => x.Markets
-                .SelectMany(x => x.Odds))
-                .Select(x => x.SpecialBetValue)
-                .ToList();
-
-            var oddsSpecialBetValues1 = matches
-                .Where(x => x.Id == "1")
-                .SelectMany(x => x.Markets
-                .SelectMany(x => x.Odds))
-                .Select(x => x.Value)
-                .ToList();
-
-            var validMatchesCount = 3;
-            var valueOfFirstGroupOddsWithSpecialBetValue = "7";
-
-            Assert.That(matches.Count() == validMatchesCount);
-            Assert.That(oddsSpecialBetValues, Is.All.EqualTo(valueOfFirstGroupOddsWithSpecialBetValue));
-        }
-
-        [Test]
-        public async Task Test1()
-        {
-            var context = ApplicationDbContextInMemoryFactory.InitializeContext();
-            var mockTestSportRepository = new EfDeletableEntityRepository<Sport>(context);
-            var mockOddNameRepository = new EfRepository<OddName>(context);
-            var mockMarketNameRepository = new EfRepository<MarketName>(context);
-            var mockTeamRepository = new EfDeletableEntityRepository<Team>(context);
-            var mockEventCategoryRepository = new EfRepository<EventCategory>(context);
-            var mockMatchTypeRepository = new EfRepository<MatchType>(context);
-            var mockMarketRepository = new EfDeletableEntityRepository<Market>(context);
-            var mockOddRepository = new EfDeletableEntityRepository<Odd>(context);
-            var mockEventRepository = new EfDeletableEntityRepository<Event>(context);
-            var mockMatchRepository = new EfDeletableEntityRepository<Match>(context);
-
-            var liveType = new MatchType
-            {
-                Name = GlobalConstants.LiveMatchType,
-            };
-
-            var prematchType = new MatchType
-            {
-                Name = GlobalConstants.PrematchMatchType,
-            };
-
-            await mockMatchTypeRepository.AddAsync(liveType);
-            await mockMatchTypeRepository.AddAsync(prematchType);
-            await mockMatchTypeRepository.SaveChangesAsync();
-
-            var xmlSportsDto = new TestDataHelper().GetXmlSportsDto();
-
-            var sportService = new SportService(
-                  this.mockConfiguration.Object,
-                  mockMarketRepository,
-                  mockOddRepository,
-                  mockTeamRepository,
-                  mockEventRepository,
-                  mockTestSportRepository,
-                  mockMatchRepository,
-                  mockMarketNameRepository,
-                  mockOddNameRepository,
-                  mockMatchTypeRepository,
-                  mockEventCategoryRepository);
-
-            await sportService.StoreDataAsync(xmlSportsDto);
-
-            foreach (var item in xmlSportsDto.SportDto.Events)
-            {
-                foreach (var match in item.Matches)
-                {
-                    foreach (var market in match.Bets)
-                    {
-                        foreach (var odd in market.Odds)
-                        {
-                            odd.Value = 777;
-                        }
-                    }
-                }
-            }
-
-            await sportService.StoreDataAsync(xmlSportsDto);
-
-            var matches = sportService.GetMatchesInNextTwentyFourHours();
-
-            var oddsSpecialBetValues = matches
-                .Where(x => x.Id == "1")
-                .SelectMany(x => x.Markets
-                .SelectMany(x => x.Odds))
-                .Select(x => x.SpecialBetValue)
-                .ToList();
-
-            var oddsSpecialBetValues1 = matches
-                .Where(x => x.Id == "1")
-                .SelectMany(x => x.Markets
-                .SelectMany(x => x.Odds))
-                .Select(x => x.Value)
-                .ToList();
-
-            var validMatchesCount = 3;
-            var valueOfFirstGroupOddsWithSpecialBetValue = "7";
-
-            Assert.That(matches.Count() == validMatchesCount);
-            Assert.That(oddsSpecialBetValues, Is.All.EqualTo(valueOfFirstGroupOddsWithSpecialBetValue));
         }
     }
 }

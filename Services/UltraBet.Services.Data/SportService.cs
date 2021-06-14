@@ -56,21 +56,24 @@
 
         public async Task StoreDataAsync(XmlSportsDto data)
         {
-
+            // To start receiving update notifications for odd entity uncomment this part of code and
+            // listener.Stop(); at the end of the method
+            /*
             var connectionString = this.configuration.GetConnectionString("DefaultConnection");
-            var listener = new SQLServiceBroker(
-                connectionString, GlobalConstants.SystemName, GlobalConstants.MonitoredTableOdds, listenerType: SQLServiceBroker.NotificationTypes.Update);
+            var listener = new SQLBrokerService(
+                connectionString, GlobalConstants.SystemName, GlobalConstants.MonitoredTableOdds, listenerType: SQLBrokerService.NotificationTypes.Update);
 
             listener.TableChanged += (obj, entity) =>
             {
-                var entityAsXml = entity.Data;
+                var updatedEntityAsXml = entity.Data;
             };
 
-            // listener.Start();
+            listener.Start();
+            */
             var watch = new Stopwatch();
             watch.Start();
 
-            // 23 total
+            // 32 total
             var oddNamesWithIds = this.oddNameRepository
                 .AllAsNoTracking()
                 .ToList()
@@ -137,6 +140,8 @@
                     };
 
                     sport.Events.Add(currentEvent);
+
+                    await this.eventRepository.AddAsync(currentEvent);
                 }
 
                 foreach (var matchDto in eventDto.Matches)
@@ -296,12 +301,12 @@
                 }
             }
 
-            this.sportRepository.Update(sport);
+            await this.eventRepository.SaveChangesAsync();
             await this.sportRepository.SaveChangesAsync();
 
-            // ~20 ~25sek
             var time = watch.Elapsed;
-            //listener.Stop();
+
+            // listener.Stop();
         }
 
         public IEnumerable<MatchInNext24HoursViewModel> GetMatchesInNextTwentyFourHours() => this.matchRepository

@@ -76,6 +76,7 @@
             services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddSingleton(this.configuration);
+
             // Data repositories
             services.AddScoped(typeof(IDeletableEntityRepository<>), typeof(EfDeletableEntityRepository<>));
             services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
@@ -85,6 +86,7 @@
             services.AddTransient<IFetchSportDataService, FetchSportDataService>();
             services.AddTransient<ISerializationService, SerializationService>();
             services.AddTransient<ISportService, SportService>();
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IRecurringJobManager recurringJobManager)

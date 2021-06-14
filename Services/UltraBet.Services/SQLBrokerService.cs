@@ -12,7 +12,7 @@
 
     using Microsoft.Data.SqlClient;
 
-    public sealed class SQLServiceBroker : IDisposable
+    public sealed class SQLBrokerService : IDisposable
     {
         [Flags]
         public enum NotificationTypes
@@ -484,7 +484,7 @@
 
         public event EventHandler NotificationProcessStopped;
 
-        public SQLServiceBroker(
+        public SQLBrokerService(
             string connectionString,
             string databaseName,
             string tableName,
