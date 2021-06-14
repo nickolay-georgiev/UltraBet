@@ -7,19 +7,19 @@
     public class FetchSportData
     {
         private readonly ISportService sportService;
-        private readonly ISportDataService sportDataService;
+        private readonly IFetchSportDataService fetchSportDataService;
 
         public FetchSportData(
             ISportService sportService,
-            ISportDataService sportDataService)
+            IFetchSportDataService fetchSportDataService)
         {
             this.sportService = sportService;
-            this.sportDataService = sportDataService;
+            this.fetchSportDataService = fetchSportDataService;
         }
 
         public async Task Work()
         {
-            var data = await this.sportDataService.GetSportDataAsync(GlobalConstants.SportDataUrl);
+            var data = await this.fetchSportDataService.GetSportDataAsync(GlobalConstants.SportDataUrl);
             await this.sportService.StoreDataAsync(data);
         }
     }

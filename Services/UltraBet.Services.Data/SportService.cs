@@ -6,6 +6,7 @@
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Microsoft.Extensions.Configuration;
     using UltraBet.Common;
     using UltraBet.Data.Common.Repositories;
     using UltraBet.Data.Models;
@@ -15,6 +16,7 @@
 
     public class SportService : ISportService
     {
+        private readonly IConfiguration configuration;
         private readonly IDeletableEntityRepository<Market> marketRepository;
         private readonly IDeletableEntityRepository<Odd> oddRepository;
         private readonly IDeletableEntityRepository<Team> teamRepository;
@@ -27,6 +29,7 @@
         private readonly IRepository<EventCategory> eventCategoryRepository;
 
         public SportService(
+            IConfiguration configuration,
             IDeletableEntityRepository<Market> betRepository,
             IDeletableEntityRepository<Odd> oddRepository,
             IDeletableEntityRepository<Team> teamRepository,
@@ -38,6 +41,7 @@
             IRepository<MatchType> matchTypeRepository,
             IRepository<EventCategory> eventCategoryRepository)
         {
+            this.configuration = configuration;
             this.marketRepository = betRepository;
             this.oddRepository = oddRepository;
             this.teamRepository = teamRepository;
@@ -52,6 +56,20 @@
 
         public async Task StoreDataAsync(XmlSportsDto data)
         {
+
+            var connectionString = this.configuration.GetConnectionString("DefaultConnection");
+            var listener = new SQLServiceBroker(
+                connectionString, GlobalConstants.SystemName, GlobalConstants.MonitoredTableOdds, listenerType: SQLServiceBroker.NotificationTypes.Update);
+
+            listener.TableChanged += (obj, entity) =>
+            {
+                var entityAsXml = entity.Data;
+            };
+
+            // listener.Start();
+            var watch = new Stopwatch();
+            watch.Start();
+
             // 23 total
             var oddNamesWithIds = this.oddNameRepository
                 .AllAsNoTracking()
@@ -72,9 +90,6 @@
                .ToList()
                .GroupBy(x => x.Name)
                .ToDictionary(x => x.Key, x => x.Select(x => x.Id).ToList()[0]);
-
-            var watch = new Stopwatch();
-            watch.Start();
 
             var sport = this.sportRepository
                 .All()
@@ -284,35 +299,21 @@
             this.sportRepository.Update(sport);
             await this.sportRepository.SaveChangesAsync();
 
-            // ~25sek
+            // ~20 ~25sek
             var time = watch.Elapsed;
+            //listener.Stop();
         }
 
-        public static void bl_ProcessCompleted(object sender, bool IsSuccessful)
-        {
-            Console.WriteLine("Process " + (IsSuccessful ? "Completed Successfully" : "failed"));
-        }
-
-        public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
-        {
-            var matchViewModel = this.matchRepository
+        public IEnumerable<MatchInNext24HoursViewModel> GetMatchesInNextTwentyFourHours() => this.matchRepository
                  .AllAsNoTracking()
                  .Where(x => x.StartDate >= DateTime.UtcNow && x.StartDate <= DateTime.UtcNow.AddHours(24))
-                 .To<MatchViewModel>()
+                 .To<MatchInNext24HoursViewModel>()
                  .ToList();
 
-            return matchViewModel;
-        }
-
-        public MatchSearchByIdViewModel GetMatchById(string id)
-        {
-            var matchViewModel = this.matchRepository
+        public MatchSearchByIdViewModel GetMatchById(string id) => this.matchRepository
                  .AllAsNoTracking()
                  .To<MatchSearchByIdViewModel>()
                  .FirstOrDefault(x => x.Id == id);
-
-            return matchViewModel;
-        }
 
         // public IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours()
         // {

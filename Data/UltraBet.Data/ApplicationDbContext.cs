@@ -41,8 +41,6 @@
 
         public DbSet<MatchType> MatchTypes { get; set; }
 
-        public DbSet<UpdatedModel> UpdatedModels { get; set; }
-
         public DbSet<OddName> OddNames { get; set; }
 
         public DbSet<EventCategory> EventCategories { get; set; }

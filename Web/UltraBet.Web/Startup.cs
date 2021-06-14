@@ -21,6 +21,7 @@
     using UltraBet.Data.Seeding;
     using UltraBet.Services;
     using UltraBet.Services.Data;
+    using UltraBet.Services.Data.CronJobs;
     using UltraBet.Services.Mapping;
     using UltraBet.Web.Hubs;
     using UltraBet.Web.ViewModels;
@@ -70,28 +71,25 @@
 
             services.AddHttpClient();
 
-            services.AddMemoryCache();
-
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
             services.AddRazorPages();
             services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddSingleton(this.configuration);
-
             // Data repositories
             services.AddScoped(typeof(IDeletableEntityRepository<>), typeof(EfDeletableEntityRepository<>));
             services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
             services.AddScoped<IDbQueryRunner, DbQueryRunner>();
 
             // Application services
-            services.AddTransient<ISportDataService, SportDataService>();
-            services.AddTransient<IDeserializer, Deserializer>();
+            services.AddTransient<IFetchSportDataService, FetchSportDataService>();
+            services.AddTransient<ISerializationService, SerializationService>();
             services.AddTransient<ISportService, SportService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IRecurringJobManager recurringJobManager)
         {
-            AutoMapperConfig.RegisterMappings(typeof(MatchViewModel).GetTypeInfo().Assembly);
+            AutoMapperConfig.RegisterMappings(typeof(MatchInNext24HoursViewModel).GetTypeInfo().Assembly);
 
             // Seed data on application startup
             using (var serviceScope = app.ApplicationServices.CreateScope())
@@ -147,7 +145,7 @@
 
         private void SeedHangfireJobs(IRecurringJobManager recurringJobManager)
         {
-            //recurringJobManager.AddOrUpdate<FetchSportData>(nameof(FetchSportData), x => x.Work(), Cron.Minutely);
+            recurringJobManager.AddOrUpdate<FetchSportData>(nameof(FetchSportData), x => x.Work(), Cron.Minutely);
         }
 
         public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter

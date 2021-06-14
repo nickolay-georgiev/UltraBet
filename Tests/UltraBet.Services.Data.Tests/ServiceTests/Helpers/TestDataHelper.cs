@@ -4,6 +4,7 @@
     using System.Collections.Generic;
 
     using UltraBet.Data.Models;
+    using UltraBet.Services.Models;
 
     public class TestDataHelper
     {
@@ -48,17 +49,29 @@
                                 {
                                     Id = "1",
                                     Value = 1,
-                                    GroupNumber = 1,
-                                    SpecialBetValue = null,
+                                    SpecialBetValue = "7",
                                     OddName = new OddName { Name = "2:0"},
                                 },
                                 new Odd
                                 {
                                     Id = "2",
                                     Value = 2,
-                                    GroupNumber = 2,
-                                    SpecialBetValue = null,
+                                    SpecialBetValue = "7",
                                     OddName = new OddName { Name = "2:2"},
+                                },
+                                new Odd
+                                {
+                                    Id = "13",
+                                    Value = 2,
+                                    SpecialBetValue = "10",
+                                    OddName = new OddName { Name = "5:2"},
+                                },
+                                new Odd
+                                {
+                                    Id = "14",
+                                    Value = 2,
+                                    SpecialBetValue = "10",
+                                    OddName = new OddName { Name = "6:2"},
                                 },
                             },
                         },
@@ -101,7 +114,6 @@
                                 {
                                     Id = "3",
                                     Value = 1,
-                                    GroupNumber = 3,
                                     SpecialBetValue = null,
                                     OddName = new OddName {Name = "1:0"},
                                 },
@@ -109,7 +121,6 @@
                                 {
                                     Id = "4",
                                     Value = 2,
-                                    GroupNumber = 4,
                                     SpecialBetValue = null,
                                     OddName = new OddName { Name = "2:1"},
                                 },
@@ -154,7 +165,6 @@
                                 {
                                     Id = "5",
                                     Value = 1,
-                                    GroupNumber = 5,
                                     SpecialBetValue = null,
                                     OddName = new OddName {Name = "2:3"},
                                 },
@@ -162,7 +172,6 @@
                                 {
                                     Id = "6",
                                     Value = 2,
-                                    GroupNumber = 6,
                                     SpecialBetValue = null,
                                     OddName = new OddName { Name = "2:4"},
                                 },
@@ -207,7 +216,6 @@
                                 {
                                     Id = "7",
                                     Value = 1,
-                                    GroupNumber = 9,
                                     SpecialBetValue = null,
                                     OddName = new OddName {Name = "2:5"},
                                 },
@@ -215,7 +223,6 @@
                                 {
                                     Id = "8",
                                     Value = 2,
-                                    GroupNumber = 10,
                                     SpecialBetValue = null,
                                     OddName = new OddName { Name = "2:6"},
                                 },
@@ -240,6 +247,177 @@
                         Name = "Dota 2",
                         IsLive = false,
                         EventCategory = new EventCategory { Name = "123" },
+                    },
+                },
+            };
+        }
+
+        public XmlSportsDto GetXmlSportsDto()
+        {
+            return new XmlSportsDto
+            {
+                SportDto = new SportDto
+                {
+                    Id = "1",
+                    Name = "First",
+                    Events = new EventDto[]
+                    {
+                        new EventDto
+                        {
+                            Id = "1",
+                            Name = "1",
+                            IsLive = false,
+                            CategoryId = "1",
+                            Matches = new MatchDto[]
+                            {
+                                 new MatchDto
+                            {
+                                 Id = "1",
+                                 Name = "Navi - Nigma",
+                                 StartDate = DateTime.UtcNow.AddMinutes(1),
+                                 MatchType = "Live",
+                                 Bets = new BetDto[]
+                                 {
+                                     new BetDto
+                                     {
+                                         Id = "1",
+                                         IsLive = true,
+                                         Name = "Match Winner",
+                                         Odds = new OddDto[]
+                                         {
+                                             new OddDto
+                                             {
+                                                 Id = "1",
+                                                 Value = 1,
+                                                 SpecialBetValue = "7",
+                                                 Name = "2:0",
+                                             },
+                                             new OddDto
+                                             {
+                                                 Id = "2",
+                                                 Value = 2,
+                                                 SpecialBetValue = "7",
+                                                 Name = "2:2",
+                                             },
+                                             new OddDto
+                                             {
+                                                 Id = "13",
+                                                 Value = 2,
+                                                 SpecialBetValue = "10",
+                                                 Name = "5:2",
+                                             },
+                                             new OddDto
+                                             {
+                                                 Id = "14",
+                                                 Value = 2,
+                                                 SpecialBetValue = "10",
+                                                 Name = "6:2",
+                                             },
+                                         },
+                                     },
+                                 },
+                            },
+                                 new MatchDto
+                                 {
+                                     Id = "2",
+                                     Name = "Alliance - Brame",
+                                     StartDate = DateTime.UtcNow.AddHours(23).AddMinutes(59),
+                                     MatchType = "Live",
+                                     Bets = new BetDto[]
+                                     {
+                                         new BetDto
+                                         {
+                                             Id = "2",
+                                             IsLive = true,
+                                             Name = "Total Maps Played",
+                                             Odds = new OddDto[]
+                                             {
+                                                 new OddDto
+                                                 {
+                                                     Id = "3",
+                                                     Value = 1,
+                                                     SpecialBetValue = null,
+                                                     Name = "1:0",
+                                                 },
+                                                 new OddDto
+                                                 {
+                                                     Id = "4",
+                                                     Value = 2,
+                                                     SpecialBetValue = null,
+                                                     Name = "2:1",
+                                                 },
+                                             },
+                                         },
+                                     },
+                                 },
+                                 new MatchDto
+                                 {
+                                     Id = "3",
+                                     Name = "Hellbear Smashers - Hippomaniacs",
+                                     StartDate = DateTime.UtcNow.AddHours(15),
+                                     MatchType = "Live",
+                                     Bets = new BetDto[]
+                                     {
+                                         new BetDto
+                                         {
+                                             Id = "3",
+                                             IsLive = true,
+                                             Name = "Map Advantage",
+                                             Odds = new OddDto[]
+                                             {
+                                                 new OddDto
+                                                 {
+                                                     Id = "5",
+                                                     Value = 1,
+                                                     SpecialBetValue = null,
+                                                     Name = "2:3",
+                                                 },
+                                                 new OddDto
+                                                 {
+                                                     Id = "6",
+                                                     Value = 2,
+                                                     SpecialBetValue = null,
+                                                     Name = "2:4",
+                                                 },
+                                             },
+                                         },
+                                     },
+                                 },
+                                 new MatchDto
+                                 {
+                                     Id = "4",
+                                     Name = "Chicken Fighters - Nigma",
+                                     StartDate = DateTime.UtcNow.AddDays(3),
+                                     MatchType= "Live",
+                                     Bets = new BetDto[]
+                                     {
+                                         new BetDto
+                                         {
+                                             Id = "4",
+                                             IsLive = true,
+                                             Name = "Invalid",
+                                             Odds = new OddDto[]
+                                             {
+                                                 new OddDto
+                                                 {
+                                                     Id = "7",
+                                                     Value = 1,
+                                                     SpecialBetValue = null,
+                                                     Name = "2:5",
+                                                 },
+                                                 new OddDto
+                                                 {
+                                                     Id = "8",
+                                                     Value = 2,
+                                                     SpecialBetValue = null,
+                                                     Name = "2:6",
+                                                 },
+                                             },
+                                         },
+                                     },
+                                 },
+                            },
+                        },
                     },
                 },
             };

@@ -10,7 +10,7 @@
     {
         Task StoreDataAsync(XmlSportsDto input);
 
-        IEnumerable<MatchViewModel> GetMatchesInNextTwentyFourHours();
+        IEnumerable<MatchInNext24HoursViewModel> GetMatchesInNextTwentyFourHours();
 
         MatchSearchByIdViewModel GetMatchById(string id);
     }

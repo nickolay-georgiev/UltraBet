@@ -16,6 +16,6 @@
 
         public string MarketId { get; set; }
 
-        public virtual Market Market { get; set; }
+        public virtual Market Bet { get; set; }
     }
 }

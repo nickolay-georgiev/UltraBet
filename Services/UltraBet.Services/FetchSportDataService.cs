@@ -5,17 +5,17 @@
 
     using UltraBet.Services.Models;
 
-    public class SportDataService : ISportDataService
+    public class FetchSportDataService : IFetchSportDataService
     {
         private readonly HttpClient httpClient;
-        private readonly IDeserializer deserializer;
+        private readonly ISerializationService serializationService;
 
-        public SportDataService(
+        public FetchSportDataService(
             HttpClient httpClient,
-            IDeserializer deserializer)
+            ISerializationService serializationService)
         {
             this.httpClient = httpClient;
-            this.deserializer = deserializer;
+            this.serializationService = serializationService;
         }
 
         public async Task<XmlSportsDto> GetSportDataAsync(string url)
@@ -23,7 +23,7 @@
             var response = await this.httpClient.GetAsync(url);
             var responseAsString = await response.Content.ReadAsStringAsync();
 
-            var data = this.deserializer.Deserialize<XmlSportsDto>(responseAsString);
+            var data = this.serializationService.DeserializeSportData<XmlSportsDto>(responseAsString);
 
             return data;
         }

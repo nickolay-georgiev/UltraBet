@@ -9,7 +9,7 @@
     {
         public static void Init()
         {
-            AutoMapperConfig.RegisterMappings(typeof(MatchViewModel).GetTypeInfo().Assembly);
+            AutoMapperConfig.RegisterMappings(typeof(MatchInNext24HoursViewModel).GetTypeInfo().Assembly);
         }
     }
 }

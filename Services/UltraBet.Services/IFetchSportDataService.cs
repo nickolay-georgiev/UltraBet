@@ -4,7 +4,7 @@
 
     using UltraBet.Services.Models;
 
-    public interface ISportDataService
+    public interface IFetchSportDataService
     {
         Task<XmlSportsDto> GetSportDataAsync(string url);
     }
