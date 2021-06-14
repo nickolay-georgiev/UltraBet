@@ -16,7 +16,7 @@
 
 ## DB Diagram
 
-![Db diagram]()
+![Db diagram](https://github.com/nickolay-georgiev/UltraBet/blob/main/Web/UltraBet.Web/wwwroot/img/db.jpg)
 
 ## Author
 
